@@ -1,0 +1,232 @@
+"use server";
+
+import { and, eq, ne, sql } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import { requireUser, type SessionUser } from "@/lib/auth/session";
+import { COUNTRIES, MAX_TAGS, REPORT_REASONS, TAGS } from "@/lib/constants";
+import { db, schema } from "@/lib/db";
+import { fieldErrorsFrom, str, type FormState } from "@/lib/form";
+import { isValidHost } from "@/lib/minecraft/address";
+import { pingServer } from "@/lib/minecraft/ping";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getClientIp, rateLimit } from "@/lib/security";
+import { uniqueSlug } from "@/lib/servers";
+import { refreshServerStatus } from "@/server/status";
+
+const { servers } = schema;
+
+const optionalUrl = z
+  .string()
+  .max(255)
+  .refine((v) => v === "" || /^https?:\/\/[^\s]+$/i.test(v), "Muss mit http:// oder https:// beginnen")
+  .transform((v) => v || null);
+
+const serverSchema = z
+  .object({
+    name: z.string().min(3, "Mindestens 3 Zeichen").max(64, "Höchstens 64 Zeichen"),
+    host: z
+      .string()
+      .toLowerCase()
+      .refine(isValidHost, "Ungültige Adresse (z. B. play.example.net)"),
+    port: z.coerce.number().int().min(1).max(65535),
+    shortDescription: z
+      .string()
+      .min(10, "Mindestens 10 Zeichen")
+      .max(160, "Höchstens 160 Zeichen"),
+    description: z.string().max(5000, "Höchstens 5000 Zeichen"),
+    website: optionalUrl,
+    discord: optionalUrl,
+    bannerUrl: optionalUrl,
+    country: z
+      .string()
+      .refine((v) => v === "" || v in COUNTRIES, "Ungültiges Land")
+      .transform((v) => v || null),
+    tags: z
+      .array(z.enum(TAGS))
+      .max(MAX_TAGS, `Höchstens ${MAX_TAGS} Tags`),
+    votifierEnabled: z.boolean(),
+    votifierHost: z.string().max(255),
+    votifierPort: z.coerce.number().int().min(1).max(65535).optional(),
+    votifierProtocol: z.enum(["v1", "v2"]),
+    votifierPublicKey: z.string().max(2000),
+    votifierToken: z.string().max(255),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.votifierEnabled) return;
+    if (data.votifierHost && !isValidHost(data.votifierHost)) {
+      ctx.addIssue({ code: "custom", path: ["votifierHost"], message: "Ungültige Adresse" });
+    }
+    if (!data.votifierPort) {
+      ctx.addIssue({ code: "custom", path: ["votifierPort"], message: "Port fehlt" });
+    }
+    if (data.votifierProtocol === "v1" && !data.votifierPublicKey) {
+      ctx.addIssue({ code: "custom", path: ["votifierPublicKey"], message: "Public Key fehlt" });
+    }
+    if (data.votifierProtocol === "v2" && !data.votifierToken) {
+      ctx.addIssue({ code: "custom", path: ["votifierToken"], message: "Token fehlt" });
+    }
+  });
+
+function parseServerForm(formData: FormData) {
+  return serverSchema.safeParse({
+    name: str(formData, "name"),
+    host: str(formData, "host"),
+    port: str(formData, "port") || 25565,
+    shortDescription: str(formData, "shortDescription"),
+    description: str(formData, "description"),
+    website: str(formData, "website"),
+    discord: str(formData, "discord"),
+    bannerUrl: str(formData, "bannerUrl"),
+    country: str(formData, "country"),
+    tags: formData.getAll("tags").map(String),
+    votifierEnabled: formData.get("votifierEnabled") === "on",
+    votifierHost: str(formData, "votifierHost"),
+    votifierPort: str(formData, "votifierPort") || undefined,
+    votifierProtocol: str(formData, "votifierProtocol") || "v2",
+    votifierPublicKey: str(formData, "votifierPublicKey"),
+    votifierToken: str(formData, "votifierToken"),
+  });
+}
+
+function toColumns(data: z.infer<typeof serverSchema>) {
+  return {
+    name: data.name,
+    host: data.host,
+    port: data.port,
+    shortDescription: data.shortDescription,
+    description: data.description,
+    website: data.website,
+    discord: data.discord,
+    bannerUrl: data.bannerUrl,
+    country: data.country,
+    tags: data.tags,
+    votifierEnabled: data.votifierEnabled,
+    votifierHost: data.votifierEnabled ? data.votifierHost || data.host : null,
+    votifierPort: data.votifierEnabled ? (data.votifierPort ?? null) : null,
+    votifierProtocol: data.votifierProtocol,
+    votifierPublicKey: data.votifierEnabled ? data.votifierPublicKey || null : null,
+    votifierToken: data.votifierEnabled ? data.votifierToken || null : null,
+  };
+}
+
+async function addressTaken(host: string, port: number, ignoreId?: string) {
+  const conditions = [sql`lower(${servers.host}) = ${host}`, eq(servers.port, port)];
+  if (ignoreId) conditions.push(ne(servers.id, ignoreId));
+  const rows = await db.select({ id: servers.id }).from(servers).where(and(...conditions)).limit(1);
+  return rows.length > 0;
+}
+
+export async function createServer(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await requireUser("/submit");
+  if (!rateLimit(`submit:${user.id}`, 5, 60 * 60 * 1000)) {
+    return { error: "Zu viele Einreichungen. Bitte später erneut versuchen." };
+  }
+  const parsed = parseServerForm(formData);
+  if (!parsed.success) return { fieldErrors: fieldErrorsFrom(parsed.error) };
+  const data = parsed.data;
+
+  if (await addressTaken(data.host, data.port)) {
+    return { fieldErrors: { host: "Dieser Server ist bereits gelistet" } };
+  }
+
+  // Only accept servers that actually answer, otherwise the list fills up with dead entries.
+  const status = await pingServer(data.host, data.port);
+  if (!status.online) {
+    return {
+      fieldErrors: {
+        host: `Server nicht erreichbar (${status.error}). Ist er online und die Adresse korrekt?`,
+      },
+    };
+  }
+
+  const [created] = await db
+    .insert(servers)
+    .values({ ...toColumns(data), slug: await uniqueSlug(data.name), ownerId: user.id })
+    .returning({ id: servers.id, slug: servers.slug, host: servers.host, port: servers.port });
+
+  await refreshServerStatus(created);
+  revalidatePath("/");
+  redirect(`/server/${created.slug}?created=1`);
+}
+
+async function loadEditable(id: string, user: SessionUser) {
+  const [server] = await db.select().from(servers).where(eq(servers.id, id)).limit(1);
+  if (!server) return null;
+  if (server.ownerId !== user.id && user.role !== "admin") return null;
+  return server;
+}
+
+export async function updateServer(_prev: FormState, formData: FormData): Promise<FormState> {
+  const id = str(formData, "id");
+  const user = await requireUser(`/account`);
+  const server = await loadEditable(id, user);
+  if (!server) return { error: "Server nicht gefunden oder keine Berechtigung." };
+
+  const parsed = parseServerForm(formData);
+  if (!parsed.success) return { fieldErrors: fieldErrorsFrom(parsed.error) };
+  const data = parsed.data;
+
+  const addressChanged = data.host !== server.host.toLowerCase() || data.port !== server.port;
+  if (addressChanged) {
+    if (await addressTaken(data.host, data.port, server.id)) {
+      return { fieldErrors: { host: "Dieser Server ist bereits gelistet" } };
+    }
+    const status = await pingServer(data.host, data.port);
+    if (!status.online) {
+      return { fieldErrors: { host: `Server nicht erreichbar (${status.error}).` } };
+    }
+  }
+
+  const slug = data.name !== server.name ? await uniqueSlug(data.name, server.id) : server.slug;
+  await db
+    .update(servers)
+    .set({ ...toColumns(data), slug, updatedAt: new Date() })
+    .where(eq(servers.id, server.id));
+  if (addressChanged) await refreshServerStatus({ id: server.id, host: data.host, port: data.port });
+
+  revalidatePath("/");
+  revalidatePath(`/server/${slug}`);
+  redirect(`/server/${slug}`);
+}
+
+export async function deleteServer(formData: FormData) {
+  const user = await requireUser("/account");
+  const server = await loadEditable(str(formData, "id"), user);
+  if (!server) return;
+  await db.delete(servers).where(eq(servers.id, server.id));
+  revalidatePath("/");
+  redirect(user.role === "admin" && server.ownerId !== user.id ? "/admin/servers" : "/account");
+}
+
+export async function refreshStatusNow(formData: FormData) {
+  const user = await requireUser("/account");
+  const server = await loadEditable(str(formData, "id"), user);
+  if (!server) return;
+  if (!rateLimit(`refresh:${server.id}`, 1, 60 * 1000)) return;
+  await refreshServerStatus(server);
+  revalidatePath(`/server/${server.slug}`);
+}
+
+const reportSchema = z.object({
+  serverId: z.uuid(),
+  reason: z.string().refine((v) => v in REPORT_REASONS, "Bitte einen Grund wählen"),
+  message: z.string().max(1000, "Höchstens 1000 Zeichen"),
+});
+
+export async function reportServer(_prev: FormState, formData: FormData): Promise<FormState> {
+  const ip = await getClientIp();
+  if (!rateLimit(`report:${ip}`, 5, 60 * 60 * 1000)) {
+    return { error: "Zu viele Meldungen. Bitte später erneut versuchen." };
+  }
+  const parsed = reportSchema.safeParse({
+    serverId: str(formData, "serverId"),
+    reason: str(formData, "reason"),
+    message: str(formData, "message"),
+  });
+  if (!parsed.success) return { fieldErrors: fieldErrorsFrom(parsed.error) };
+  const user = await getCurrentUser();
+  await db.insert(schema.reports).values({ ...parsed.data, reporterId: user?.id ?? null });
+  return { success: "Danke! Wir schauen uns die Meldung an." };
+}

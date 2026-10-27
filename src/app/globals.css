@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@theme {
+  --color-brand-300: #86efac;
+  --color-brand-400: #4ade80;
+  --color-brand-500: #22c55e;
+  --color-brand-600: #16a34a;
+  --color-brand-700: #15803d;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-zinc-950 text-zinc-100;
+}
+
+@utility card {
+  @apply rounded-xl border border-zinc-800 bg-zinc-900/60;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60;
+}
+@utility btn-primary {
+  @apply btn bg-brand-600 text-white hover:bg-brand-500;
+}
+@utility btn-secondary {
+  @apply btn border border-zinc-700 bg-zinc-800 text-zinc-100 hover:bg-zinc-700;
+}
+@utility btn-danger {
+  @apply btn bg-red-600 text-white hover:bg-red-500;
+}
+@utility input {
+  @apply w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500;
+}
+@utility label {
+  @apply mb-1 block text-sm font-medium text-zinc-300;
+}
+@utility field-error {
+  @apply mt-1 text-sm text-red-400;
+}
+@utility tag {
+  @apply inline-flex items-center rounded-md bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-300;
+}

@@ -1,0 +1,58 @@
+# Production stack for Dokploy (service type "Compose").
+#
+# Dokploy setup:
+#   1. Create a Compose service, source = this repo, compose path = ./docker-compose.prod.yml
+#   2. Environment tab: set at least APP_URL, APP_SECRET, POSTGRES_PASSWORD, ADMIN_EMAILS.
+#      Dokploy writes them to a .env file next to this compose file; they are interpolated below.
+#   3. Domains tab: add your domain -> service "app", container port 3000, HTTPS on.
+#      Dokploy injects the Traefik labels and network itself, so none are defined here.
+#   4. Optional: Volume Backups for the named volume "db_data".
+# Full guide: docs/deployment.md
+
+services:
+  app:
+    build:
+      context: .
+      target: runner
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-mcsl}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-mcsl}
+      APP_URL: ${APP_URL:?set APP_URL, e.g. https://servers.example.com}
+      APP_SECRET: ${APP_SECRET:?set APP_SECRET (openssl rand -base64 48)}
+      SITE_NAME: ${SITE_NAME:-MCServerlist}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+      STATUS_WORKER_ENABLED: ${STATUS_WORKER_ENABLED:-true}
+      STATUS_INTERVAL_SECONDS: ${STATUS_INTERVAL_SECONDS:-300}
+      TZ: ${TZ:-Europe/Berlin}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mcsl}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-mcsl}
+    # Named volume (not a bind mount) so Dokploy volume backups work.
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db_data:
