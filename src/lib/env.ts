@@ -5,8 +5,14 @@ function bool(value: string | undefined, fallback: boolean) {
 }
 
 export const env = {
+  /**
+   * Connection string, or undefined when the standard PGHOST/PGUSER/PGPASSWORD/PGDATABASE
+   * variables are set instead (postgres.js reads those itself).
+   */
   get databaseUrl() {
-    return process.env.DATABASE_URL ?? "postgres://mcsl:mcsl@localhost:5432/mcsl";
+    if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
+    if (process.env.PGHOST) return undefined;
+    return "postgres://mcsl:mcsl@localhost:5432/mcsl";
   },
   get appUrl() {
     return (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");

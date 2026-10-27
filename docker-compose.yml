@@ -1,6 +1,6 @@
 # Local development: hot reload, source mounted into the container.
 #   docker compose up
-# App: http://localhost:3000 · Postgres: localhost:5432 (mcsl/mcsl)
+# App: http://localhost:3000 · Postgres: localhost:5432 (user mcsl, no password needed)
 name: mc-serverlist-dev
 
 services:
@@ -12,7 +12,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgres://mcsl:mcsl@db:5432/mcsl
+      DATABASE_URL: postgres://mcsl@db:5432/mcsl
       APP_URL: http://localhost:3000
       APP_SECRET: dev-secret-change-me
       ADMIN_EMAILS: ${ADMIN_EMAILS:-admin@example.com}
@@ -33,10 +33,11 @@ services:
     image: postgres:17-alpine
     environment:
       POSTGRES_USER: mcsl
-      POSTGRES_PASSWORD: mcsl
       POSTGRES_DB: mcsl
+      # Local dev only: no password, the port is bound to 127.0.0.1.
+      POSTGRES_HOST_AUTH_METHOD: trust
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
