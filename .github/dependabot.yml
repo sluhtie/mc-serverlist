@@ -1,5 +1,7 @@
 version: 2
 updates:
+  # npm is the only package manager in this repo. Dependabot calls this ecosystem
+  # "npm_and_yarn" in branch names, but it only touches package.json/package-lock.json.
   - package-ecosystem: npm
     directory: /
     schedule:
@@ -7,6 +9,13 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Keep the types in line with the Node.js version we run (see .nvmrc / Dockerfile).
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # Next.js still needs the TypeScript 5 JavaScript API at build time.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -15,3 +24,7 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    ignore:
+      # Only move to a new Node.js major once it is an LTS release; done by hand.
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
