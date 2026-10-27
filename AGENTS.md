@@ -20,8 +20,9 @@ MCServerlist is an open-source Minecraft server list: server listings with live 
 Server List Ping), monthly vote ranking, Votifier/NuVotifier vote rewards, user accounts, server
 submission, reports and an admin area. Stack: **Next.js 16 (App Router, React 19, TypeScript)**,
 **Tailwind CSS v4**, **PostgreSQL** via **Drizzle ORM**, **Zod** validation, **Vitest** tests,
-deployed with **Docker Compose** (Dokploy in production). The UI language is **German**;
-code, comments, commit messages and docs are **English**.
+deployed with **Docker Compose** (Dokploy in production). The UI is **German** (default, at
+`/`) and **English** (under `/en`), with a light and a dark theme; code, comments, commit
+messages and docs are **English**.
 
 ## Commands
 
@@ -54,9 +55,13 @@ src/
                        skin.ts + png.ts (player heads via the Mojang API), player.ts (name rules).
     servers.ts         Read queries for server listings and stats.
     env.ts             All runtime configuration. Never read process.env elsewhere.
-    seo.ts             pageMetadata() (title, canonical, OpenGraph, robots) and JSON-LD helpers.
+    seo.ts             pageMetadata() (title, canonical, hreflang, OpenGraph, robots) and JSON-LD helpers.
+    i18n/              Locales: config.ts (localizePath, client-safe), server.ts (getDictionary,
+                       getLocale, localRedirect), client.tsx (useT), dictionaries/de.ts + en.ts.
+    theme.ts           Light/dark/system choice, stored in the mcsl_theme cookie.
     tags.ts            Game mode slugs and texts for the /spielmodus landing pages.
     security.ts        Client IP, IP hashing, rate limiting, Turnstile.
+  proxy.ts             Locale routing: rewrites /en/... to the German file system routes.
   server/
     actions/           Server Actions ("use server"), one file per domain.
     status.ts          Background status worker.
@@ -76,12 +81,16 @@ public/brand/          Source SVGs of the logo and app icon. The PNG/ICO icons i
 - Mutations go through **Server Actions** in `src/server/actions/`. Every action must
   authenticate/authorize itself (`requireUser`, `requireAdmin`, ownership checks) and validate
   input with Zod. Never trust hidden form fields for authorization.
-- Every public page exports metadata built with `pageMetadata()` from `lib/seo.ts` (canonical
-  path, description, OpenGraph/Twitter). Private pages (forms, account, admin) use `robots: NOINDEX`.
+- Every public page exports `generateMetadata` built with `pageMetadata()` from `lib/seo.ts`
+  (locale, internal path, description); it sets the localized canonical, hreflang alternates and
+  OpenGraph/Twitter. Private pages (forms, account, admin) use `robots: NOINDEX`.
   Filter/sort variants of lists are `noindex, follow`; new indexable pages go into `sitemap.ts`.
 - Keep Client Components small and only where interactivity is needed (`"use client"`).
-- Use `next/link` for internal links. External user-supplied images use `<img>` with an
-  eslint-disable comment (see `server-card.tsx`), because hosts are arbitrary.
+- Use `@/components/link` (not `next/link`) for internal links and pass the internal German
+  path (`/spielmodus`); it adds the `/en` prefix for English visitors. Server-side redirects use
+  `localRedirect()` from `lib/i18n/server.ts`, GET form actions `localizePath()`.
+  External user-supplied images use `<img>` with an eslint-disable comment (see
+  `server-card.tsx`), because hosts are arbitrary.
 
 ### Database
 - Change the schema only in `src/lib/db/schema.ts`, then generate a migration with drizzle-kit.
@@ -102,10 +111,19 @@ public/brand/          Source SVGs of the logo and app icon. The PNG/ICO icons i
 ### Code style
 - TypeScript strict, no `any`. Prefer small, typed functions over classes.
 - Match the surrounding code: naming, comment density, file layout. Comments explain *why*.
-- UI strings are German (`Server eintragen`, `Jetzt voten`). Keep the tone informal ("du").
-- Tailwind utility classes; reuse the shared utilities in `globals.css` (`card`, `btn-primary`,
-  `btn-secondary`, `btn-danger`, `input`, `label`, `tag`, `field-error`, `checkbox`).
-  Use `components/ui/select.tsx` instead of a native `<select>`, which looks off in the dark theme.
+- Never hard-code UI text. Add it to `lib/i18n/dictionaries/de.ts` and `en.ts` (TypeScript
+  enforces the same keys) and read it with `getDictionary()` (Server Components, actions) or
+  `useT()` (Client Components). Texts that depend on data are functions. German keeps the
+  informal tone ("du"). Server Actions build Zod schemas per request so errors are translated.
+  Format numbers and dates with `INTL_LOCALE[locale]`.
+- Tailwind utility classes with the semantic theme colors (`bg-page`, `bg-surface`,
+  `bg-surface-2`, `bg-inset`, `border-line`, `text-fg`, `text-muted`, `text-subtle`,
+  `text-accent`, `text-ok`/`warn`/`danger`/`info`) instead of fixed palette colors, so both
+  themes work. Reuse the shared utilities in `globals.css` (`card`, `card-hover`, `btn-primary`,
+  `btn-secondary`, `btn-ghost`, `btn-danger`, `input`, `label`, `tag`, `link`, `eyebrow`,
+  `field-error`, `checkbox`, `xp-bar`). Headings use `font-display`, small accents `font-pixel`.
+  Use `components/ui/select.tsx` instead of a native `<select>`. Respect `prefers-reduced-motion`
+  (globals.css already disables animations for it).
 - Add or update Vitest tests for logic in `src/lib/` (protocol code, parsing, validation).
 
 ### Pull requests

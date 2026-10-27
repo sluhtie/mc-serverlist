@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { Select } from "@/components/ui/select";
 import { COUNTRIES, MAX_TAGS, TAGS } from "@/lib/constants";
 import type { FormState } from "@/lib/form";
+import { useT } from "@/lib/i18n/client";
 import { createServer, updateServer } from "@/server/actions/servers";
 import { FieldError, FormMessage } from "./form-message";
 import { MarkdownEditor } from "./markdown-editor";
@@ -50,6 +51,7 @@ const empty: ServerFormValues = {
 const initial: FormState = {};
 
 export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
+  const t = useT();
   const editing = Boolean(values.id);
   const [state, action, pending] = useActionState(editing ? updateServer : createServer, initial);
   const [tags, setTags] = useState<string[]>(values.tags);
@@ -71,10 +73,10 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
       {values.id && <input type="hidden" name="id" value={values.id} />}
 
       <fieldset className="card space-y-4 p-6">
-        <legend className="px-2 text-lg font-semibold">Allgemein</legend>
+        <legend className="px-2 font-display text-lg font-bold">{t.serverForm.general}</legend>
         <div>
           <label className="label" htmlFor="name">
-            Servername *
+            {t.serverForm.name}
           </label>
           <input id="name" name="name" defaultValue={values.name} className="input" required maxLength={64} />
           <FieldError state={state} name="name" />
@@ -82,7 +84,7 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
         <div className="grid gap-4 sm:grid-cols-[1fr_8rem]">
           <div>
             <label className="label" htmlFor="host">
-              Server-Adresse *
+              {t.serverForm.host}
             </label>
             <input
               id="host"
@@ -96,7 +98,7 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
           </div>
           <div>
             <label className="label" htmlFor="port">
-              Port
+              {t.serverForm.port}
             </label>
             <input
               id="port"
@@ -110,12 +112,12 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
             <FieldError state={state} name="port" />
           </div>
         </div>
-        <p className="text-xs text-zinc-500">
-          Wir prüfen beim Speichern, ob der Server erreichbar ist. SRV-Records werden unterstützt.
+        <p className="text-xs text-subtle">
+          {t.serverForm.pingNote}
         </p>
         <div>
           <label className="label" htmlFor="shortDescription">
-            Kurzbeschreibung *
+            {t.serverForm.shortDescription}
           </label>
           <input
             id="shortDescription"
@@ -129,7 +131,7 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
         </div>
         <div>
           <label className="label" htmlFor="description">
-            Beschreibung
+            {t.serverForm.description}
           </label>
           <MarkdownEditor id="description" name="description" defaultValue={values.description} maxLength={5000} />
           <FieldError state={state} name="description" />
@@ -137,10 +139,10 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
       </fieldset>
 
       <fieldset className="card space-y-4 p-6">
-        <legend className="px-2 text-lg font-semibold">Spielmodi & Details</legend>
+        <legend className="px-2 font-display text-lg font-bold">{t.serverForm.details}</legend>
         <div>
           <span className="label">
-            Tags ({tags.length}/{MAX_TAGS})
+            {t.serverForm.tags(tags.length, MAX_TAGS)}
           </span>
           <div className="flex flex-wrap gap-2">
             {TAGS.map((tag) => {
@@ -148,10 +150,10 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
               return (
                 <label
                   key={tag}
-                  className={`cursor-pointer rounded-md border px-2.5 py-1 text-sm ${
+                  className={`cursor-pointer rounded-lg border px-2.5 py-1 text-sm transition has-focus-visible:ring-4 has-focus-visible:ring-brand-500/20 ${
                     active
-                      ? "border-brand-500 bg-brand-500/15 text-brand-300"
-                      : "border-zinc-700 text-zinc-300 hover:border-zinc-500"
+                      ? "border-brand-500 bg-brand-500/15 font-medium text-accent"
+                      : "border-line-strong bg-inset text-fg-soft hover:border-subtle"
                   }`}
                 >
                   <input
@@ -172,21 +174,21 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="label" htmlFor="country">
-              Land
+              {t.serverForm.country}
             </label>
             <Select
               id="country"
               name="country"
               defaultValue={values.country ?? ""}
               options={[
-                { value: "", label: "Keine Angabe" },
-                ...Object.entries(COUNTRIES).map(([value, label]) => ({ value, label })),
+                { value: "", label: t.serverForm.noCountry },
+                ...COUNTRIES.map((value) => ({ value, label: t.countries[value] })),
               ]}
             />
           </div>
           <div>
             <label className="label" htmlFor="bannerUrl">
-              Banner-URL (468×60)
+              {t.serverForm.banner}
             </label>
             <input
               id="bannerUrl"
@@ -200,7 +202,7 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
           </div>
           <div>
             <label className="label" htmlFor="website">
-              Website
+              {t.serverForm.website}
             </label>
             <input
               id="website"
@@ -214,7 +216,7 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
           </div>
           <div>
             <label className="label" htmlFor="discord">
-              Discord-Einladung
+              {t.serverForm.discord}
             </label>
             <input
               id="discord"
@@ -230,8 +232,8 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
       </fieldset>
 
       <fieldset className="card space-y-4 p-6">
-        <legend className="px-2 text-lg font-semibold">Votifier (Vote-Belohnungen)</legend>
-        <label className="flex w-fit cursor-pointer items-center gap-2 text-sm">
+        <legend className="px-2 font-display text-lg font-bold">{t.serverForm.votifier}</legend>
+        <label className="flex w-fit cursor-pointer items-center gap-2.5 text-sm">
           <input
             type="checkbox"
             name="votifierEnabled"
@@ -239,26 +241,26 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
             onChange={(e) => setVotifier(e.target.checked)}
             className="checkbox"
           />
-          Votes per Votifier/NuVotifier an meinen Server senden
+          {t.serverForm.votifierEnable}
         </label>
         {votifier && (
           <div className="grid gap-4 sm:grid-cols-[1fr_8rem_8rem]">
             <div>
               <label className="label" htmlFor="votifierHost">
-                Votifier-Host
+                {t.serverForm.votifierHost}
               </label>
               <input
                 id="votifierHost"
                 name="votifierHost"
                 defaultValue={values.votifierHost ?? ""}
-                placeholder="Leer = Server-Adresse"
+                placeholder={t.serverForm.votifierHostPlaceholder}
                 className="input font-mono"
               />
               <FieldError state={state} name="votifierHost" />
             </div>
             <div>
               <label className="label" htmlFor="votifierPort">
-                Port
+                {t.serverForm.port}
               </label>
               <input
                 id="votifierPort"
@@ -271,7 +273,7 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
             </div>
             <div>
               <label className="label" htmlFor="votifierProtocol">
-                Protokoll
+                {t.serverForm.protocol}
               </label>
               <Select
                 id="votifierProtocol"
@@ -287,7 +289,7 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
             {protocol === "v2" ? (
               <div className="sm:col-span-3">
                 <label className="label" htmlFor="votifierToken">
-                  Token (aus <code>plugins/Votifier/config.yml</code>)
+                  {t.serverForm.token} <code>plugins/Votifier/config.yml</code>)
                 </label>
                 <input
                   id="votifierToken"
@@ -301,7 +303,7 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
             ) : (
               <div className="sm:col-span-3">
                 <label className="label" htmlFor="votifierPublicKey">
-                  Public Key (aus <code>rsa/public.key</code>)
+                  {t.serverForm.publicKey} <code>rsa/public.key</code>)
                 </label>
                 <textarea
                   id="votifierPublicKey"
@@ -317,8 +319,8 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
         )}
       </fieldset>
 
-      <button className="btn-primary" disabled={pending}>
-        {pending ? "Prüfe Server…" : editing ? "Änderungen speichern" : "Server eintragen"}
+      <button className="btn-primary px-6 py-3 text-base" disabled={pending}>
+        {pending ? t.serverForm.checking : editing ? t.serverForm.save : t.serverForm.create}
       </button>
     </form>
   );

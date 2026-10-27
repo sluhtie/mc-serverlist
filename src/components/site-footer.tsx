@@ -1,53 +1,84 @@
-import Link from "next/link";
 import { LogoMark } from "@/components/brand/logo-mark";
+import Link from "@/components/link";
 import { TAGS } from "@/lib/constants";
 import { env } from "@/lib/env";
+import { getDictionary } from "@/lib/i18n/server";
 import { tagHref } from "@/lib/tags";
 
 // Crawlable links to the most important landing pages on every page.
 const FOOTER_TAGS = TAGS.slice(0, 12);
 
-export function SiteFooter() {
+function Column({ title, links }: { title: string; links: { href: string; label: string }[] }) {
   return (
-    <footer className="border-t border-zinc-800 py-8 text-sm text-zinc-400">
-      <nav aria-label="Spielmodi" className="mx-auto mb-6 max-w-6xl px-4">
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-          Minecraft Server nach Spielmodus
-        </h2>
-        <ul className="flex flex-wrap gap-x-4 gap-y-1">
-          {FOOTER_TAGS.map((tag) => (
-            <li key={tag}>
-              <Link href={tagHref(tag)} className="hover:text-zinc-200">
-                {tag} Server
-              </Link>
-            </li>
-          ))}
-          <li>
-            <Link href="/spielmodus" className="text-brand-400 hover:underline">
-              Alle Spielmodi
+    <div>
+      <h2 className="eyebrow mb-3 text-subtle!">{title}</h2>
+      <ul className="space-y-2">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link href={link.href} className="text-muted transition hover:text-fg">
+              {link.label}
             </Link>
           </li>
-        </ul>
-      </nav>
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4">
-        <span className="flex items-center gap-2">
-          <LogoMark className="h-6 w-6 shrink-0" />
-          <span>
-            © {new Date().getFullYear()} {env.siteName}. Nicht offiziell mit Mojang oder Microsoft
-            verbunden.
-          </span>
-        </span>
-        <nav className="ml-auto flex gap-4">
-          <Link href="/api-docs" className="hover:text-zinc-200">
-            API
-          </Link>
-          <Link href="/impressum" className="hover:text-zinc-200">
-            Impressum
-          </Link>
-          <Link href="/datenschutz" className="hover:text-zinc-200">
-            Datenschutz
-          </Link>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export async function SiteFooter() {
+  const t = await getDictionary();
+  return (
+    <footer className="mt-16 text-sm">
+      <div className="grass-strip" aria-hidden />
+      <div className="border-t border-black/20 bg-surface">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+          <div className="max-w-xs">
+            <Link href="/" className="flex items-center gap-2.5">
+              <LogoMark className="h-9 w-9" />
+              <span className="font-display text-lg font-extrabold tracking-tight">{env.siteName}</span>
+            </Link>
+            <p className="mt-3 text-muted">{t.footer.pitch}</p>
+          </div>
+          <Column
+            title={t.footer.explore}
+            links={[
+              { href: "/#ranking", label: t.footer.ranking },
+              { href: "/?sort=newest#ranking", label: t.footer.newest },
+              { href: "/spielmodus", label: t.footer.allGamemodes },
+            ]}
+          />
+          <Column
+            title={t.footer.forOwners}
+            links={[
+              { href: "/submit", label: t.footer.submit },
+              { href: "/api-docs", label: t.footer.api },
+            ]}
+          />
+          <Column
+            title={t.footer.legal}
+            links={[
+              { href: "/impressum", label: t.footer.imprint },
+              { href: "/datenschutz", label: t.footer.privacy },
+            ]}
+          />
+        </div>
+        <nav aria-label={t.footer.gamemodesNav} className="mx-auto max-w-6xl border-t border-line px-4 py-6">
+          <h2 className="eyebrow mb-3 text-subtle!">{t.footer.byGamemode}</h2>
+          <ul className="flex flex-wrap gap-2">
+            {FOOTER_TAGS.map((tag) => (
+              <li key={tag}>
+                <Link href={tagHref(tag)} className="tag transition hover:border-line-strong hover:text-fg">
+                  {t.footer.tagServers(tag)}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </nav>
+        <div className="border-t border-line">
+          <p className="mx-auto max-w-6xl px-4 py-5 text-xs text-subtle">
+            {t.footer.disclaimer(new Date().getFullYear(), env.siteName)}
+          </p>
+        </div>
       </div>
     </footer>
   );

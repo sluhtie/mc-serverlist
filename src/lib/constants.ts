@@ -27,26 +27,10 @@ export const TAGS = [
 
 export const MAX_TAGS = 6;
 
-export const COUNTRIES: Record<string, string> = {
-  DE: "Deutschland",
-  AT: "Österreich",
-  CH: "Schweiz",
-  NL: "Niederlande",
-  FR: "Frankreich",
-  PL: "Polen",
-  GB: "Vereinigtes Königreich",
-  US: "USA",
-  CA: "Kanada",
-  INT: "International",
-};
+// Labels live in the dictionaries (`countries`, `reportReasons`); these are the stored keys.
+export const COUNTRIES = ["DE", "AT", "CH", "NL", "FR", "PL", "GB", "US", "CA", "INT"] as const;
 
-export const REPORT_REASONS: Record<string, string> = {
-  offline: "Server ist dauerhaft offline",
-  wrong_info: "Falsche Angaben",
-  vote_abuse: "Vote-Manipulation",
-  inappropriate: "Unangemessene Inhalte",
-  other: "Sonstiges",
-};
+export const REPORT_REASONS = ["offline", "wrong_info", "vote_abuse", "inappropriate", "other"] as const;
 
 export const PAGE_SIZE = 20;
 

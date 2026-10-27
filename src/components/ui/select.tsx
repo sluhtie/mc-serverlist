@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { useT } from "@/lib/i18n/client";
 
 export type SelectOption = { value: string; label: string };
 
@@ -32,11 +33,12 @@ export function Select({
   defaultValue = "",
   value: controlledValue,
   onValueChange,
-  placeholder = "Auswählen…",
+  placeholder,
   className = "",
   "aria-label": ariaLabel,
   size = "md",
 }: SelectProps) {
+  const t = useT();
   const autoId = useId();
   const buttonId = id ?? `${autoId}-button`;
   const listId = `${autoId}-list`;
@@ -182,15 +184,15 @@ export function Select({
         onBlur={() => setOpen(false)}
         className={`input flex items-center justify-between gap-2 text-left ${
           size === "sm" ? "py-1" : ""
-        } ${open ? "border-brand-500 ring-1 ring-brand-500" : "hover:border-zinc-500"}`}
+        } ${open ? "border-brand-500 ring-4 ring-brand-500/15" : ""}`}
       >
-        <span className={`truncate ${selected ? "" : "text-zinc-500"}`}>
-          {selected?.label ?? placeholder}
+        <span className={`truncate ${selected ? "" : "text-subtle"}`}>
+          {selected?.label ?? placeholder ?? t.common.selectPlaceholder}
         </span>
         <svg
           viewBox="0 0 20 20"
           aria-hidden
-          className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`h-4 w-4 shrink-0 text-subtle transition-transform ${open ? "rotate-180" : ""}`}
         >
           <path d="m5 7.5 5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -205,7 +207,7 @@ export function Select({
         hidden={!open}
         // Keep focus on the button so its blur handler does not close the list mid-click.
         onMouseDown={(e) => e.preventDefault()}
-        className={`absolute inset-x-0 z-30 max-h-72 min-w-max overflow-auto rounded-lg border border-zinc-700 bg-zinc-900 p-1 shadow-xl shadow-black/40 ${
+        className={`absolute inset-x-0 z-30 max-h-72 min-w-max overflow-auto rounded-xl border border-line-strong bg-surface p-1 shadow-xl shadow-black/20 ${
           dropUp ? "bottom-full mb-1" : "top-full mt-1"
         }`}
       >
@@ -222,13 +224,13 @@ export function Select({
                 commit(i);
                 setOpen(false);
               }}
-              className={`flex cursor-pointer items-center justify-between gap-3 rounded-md px-3 py-1.5 text-sm ${
-                i === active ? "bg-zinc-800 text-white" : "text-zinc-300"
+              className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-1.5 text-sm ${
+                i === active ? "bg-surface-2 text-fg" : "text-fg-soft"
               }`}
             >
               <span className="truncate">{option.label}</span>
               {isSelected && (
-                <svg viewBox="0 0 20 20" aria-hidden className="h-4 w-4 shrink-0 text-brand-400">
+                <svg viewBox="0 0 20 20" aria-hidden className="h-4 w-4 shrink-0 text-accent">
                   <path d="m4.5 10.5 3.5 3.5 7.5-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               )}

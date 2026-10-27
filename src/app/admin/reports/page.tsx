@@ -1,15 +1,20 @@
 import { desc, eq } from "drizzle-orm";
-import Link from "next/link";
+import type { Metadata } from "next";
+import Link from "@/components/link";
 import { requireAdmin } from "@/lib/auth/session";
-import { REPORT_REASONS } from "@/lib/constants";
 import { db, schema } from "@/lib/db";
 import { setReportStatus } from "@/server/actions/admin";
+import { INTL_LOCALE } from "@/lib/i18n/config";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { NOINDEX } from "@/lib/seo";
 
-export const metadata = { title: "Admin · Meldungen", robots: NOINDEX };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getDictionary()).meta.adminReports, robots: NOINDEX };
+}
 
 export default async function AdminReportsPage({ searchParams }: PageProps<"/admin/reports">) {
   await requireAdmin();
+  const [t, locale] = await Promise.all([getDictionary(), getLocale()]);
   const { status } = await searchParams;
   const showResolved = status === "resolved";
   const { reports, servers, users } = schema;
@@ -34,29 +39,29 @@ export default async function AdminReportsPage({ searchParams }: PageProps<"/adm
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">Meldungen</h1>
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">{t.admin.reports}</h1>
         <div className="flex gap-2 text-sm">
-          <Link href="/admin/reports" className={showResolved ? "btn-secondary" : "btn-primary"}>Offen</Link>
-          <Link href="/admin/reports?status=resolved" className={showResolved ? "btn-primary" : "btn-secondary"}>Erledigt</Link>
+          <Link href="/admin/reports" className={showResolved ? "btn-secondary" : "btn-primary"}>{t.admin.open}</Link>
+          <Link href="/admin/reports?status=resolved" className={showResolved ? "btn-primary" : "btn-secondary"}>{t.admin.resolved}</Link>
         </div>
       </div>
-      {rows.length === 0 && <div className="card p-8 text-center text-zinc-400">Keine Meldungen.</div>}
+      {rows.length === 0 && <div className="card p-10 text-center text-muted">{t.admin.noReports}</div>}
       {rows.map((r) => (
         <div key={r.id} className="card flex flex-wrap items-start gap-4 p-4 text-sm">
           <div className="min-w-0 flex-1 space-y-1">
             <div>
-              <Link href={`/server/${r.serverSlug}`} className="font-semibold hover:text-brand-400">{r.serverName}</Link>
-              <span className="tag ml-2">{REPORT_REASONS[r.reason] ?? r.reason}</span>
+              <Link href={`/server/${r.serverSlug}`} className="font-display font-bold transition hover:text-accent">{r.serverName}</Link>
+              <span className="tag ml-2">{t.reportReasons[r.reason] ?? r.reason}</span>
             </div>
-            {r.message && <p className="whitespace-pre-line text-zinc-300">{r.message}</p>}
-            <p className="text-xs text-zinc-500">
-              {r.createdAt.toLocaleString("de-DE")} · {r.reporter ?? "Gast"}
+            {r.message && <p className="whitespace-pre-line text-fg-soft">{r.message}</p>}
+            <p className="text-xs text-subtle">
+              {r.createdAt.toLocaleString(INTL_LOCALE[locale])} · {r.reporter ?? t.common.guest}
             </p>
           </div>
           <form action={setReportStatus}>
             <input type="hidden" name="id" value={r.id} />
             <input type="hidden" name="status" value={showResolved ? "open" : "resolved"} />
-            <button className="btn-secondary">{showResolved ? "Wieder öffnen" : "Als erledigt markieren"}</button>
+            <button className="btn-secondary">{showResolved ? t.admin.reopen : t.admin.markResolved}</button>
           </form>
         </div>
       ))}

@@ -8,30 +8,27 @@ import { VOTE_COOLDOWN_HOURS } from "@/lib/constants";
 import { db, schema } from "@/lib/db";
 import { env } from "@/lib/env";
 import { str, type FormState } from "@/lib/form";
+import { getDictionary } from "@/lib/i18n/server";
 import { PLAYER_NAME_PATTERN } from "@/lib/minecraft/player";
 import { sendVote } from "@/lib/minecraft/votifier";
 import { getClientIp, hashIp, rateLimit, verifyTurnstile } from "@/lib/security";
 
 const { servers, votes } = schema;
 
-const usernameSchema = z
-  .string()
-  .regex(PLAYER_NAME_PATTERN, "Gib deinen Minecraft-Namen ein (3–16 Zeichen, A–Z, 0–9, _)");
-
 export async function castVote(_prev: FormState, formData: FormData): Promise<FormState> {
-  const ip = await getClientIp();
+  const [ip, t] = await Promise.all([getClientIp(), getDictionary()]);
   if (!rateLimit(`vote:${ip}`, 20, 60 * 60 * 1000)) {
-    return { error: "Zu viele Anfragen. Bitte später erneut versuchen." };
+    return { error: t.errors.tooManyRequests };
   }
 
-  const parsedName = usernameSchema.safeParse(str(formData, "username"));
+  const parsedName = z.string().regex(PLAYER_NAME_PATTERN, t.errors.playerName).safeParse(str(formData, "username"));
   if (!parsedName.success) {
     return { fieldErrors: { username: parsedName.error.issues[0].message } };
   }
   const username = parsedName.data;
 
   if (!(await verifyTurnstile(str(formData, "cf-turnstile-response") || null, ip))) {
-    return { error: "Captcha fehlgeschlagen. Bitte erneut versuchen." };
+    return { error: t.errors.captcha };
   }
 
   const [server] = await db
@@ -39,7 +36,7 @@ export async function castVote(_prev: FormState, formData: FormData): Promise<Fo
     .from(servers)
     .where(and(eq(servers.id, str(formData, "serverId")), eq(servers.published, true)))
     .limit(1);
-  if (!server) return { error: "Server nicht gefunden." };
+  if (!server) return { error: t.errors.serverNotFound };
 
   const user = await getCurrentUser();
   const ipHash = hashIp(ip);
@@ -60,7 +57,7 @@ export async function castVote(_prev: FormState, formData: FormData): Promise<Fo
   if (recent) {
     const next = new Date(recent.createdAt.getTime() + VOTE_COOLDOWN_HOURS * 60 * 60 * 1000);
     const hours = Math.max(1, Math.ceil((next.getTime() - Date.now()) / (60 * 60 * 1000)));
-    return { error: `Du hast bereits gevotet. Nächster Vote in ca. ${hours} Std. möglich.` };
+    return { error: t.errors.alreadyVoted(hours) };
   }
 
   const [vote] = await db
@@ -91,8 +88,6 @@ export async function castVote(_prev: FormState, formData: FormData): Promise<Fo
   revalidatePath(`/server/${server.slug}`);
   revalidatePath("/");
   return {
-    success: delivered
-      ? `Danke für deinen Vote, ${username}! Deine Belohnung wurde an den Server gesendet.`
-      : `Danke für deinen Vote, ${username}!`,
+    success: delivered ? t.errors.voteDelivered(username) : t.errors.voteThanks(username),
   };
 }

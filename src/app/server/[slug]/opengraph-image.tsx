@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { OG_SIZE, OgFrame } from "@/components/brand/og-image";
 import { formatAddress } from "@/components/server-card";
 import { env } from "@/lib/env";
+import { getDictionary } from "@/lib/i18n/server";
 import { getServerBySlug } from "@/lib/servers";
 
 export const alt = "Minecraft Server bei der Serverliste";
@@ -20,7 +21,7 @@ function Stat({ label, value, color = "#fafafa" }: { label: string; value: strin
 
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const result = await getServerBySlug(slug);
+  const [result, t] = await Promise.all([getServerBySlug(slug), getDictionary()]);
   if (!result || !result.server.published) notFound();
   const { server, monthlyVotes } = result;
   const name = server.name.length > 32 ? `${server.name.slice(0, 31)}…` : server.name;
@@ -60,12 +61,12 @@ export default async function Image({ params }: { params: Promise<{ slug: string
         </div>
         <div style={{ display: "flex", gap: 56, marginTop: 40 }}>
           <Stat
-            label="Status"
+            label={t.og.status}
             value={server.online ? "Online" : "Offline"}
             color={server.online ? "#4ade80" : "#f87171"}
           />
-          <Stat label="Spieler" value={`${server.playersOnline}/${server.playersMax}`} />
-          <Stat label="Votes (Monat)" value={String(monthlyVotes)} />
+          <Stat label={t.og.players} value={`${server.playersOnline}/${server.playersMax}`} />
+          <Stat label={t.og.votes} value={String(monthlyVotes)} />
         </div>
       </OgFrame>
     ),

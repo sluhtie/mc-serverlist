@@ -1,13 +1,16 @@
-import Link from "next/link";
+import Link from "@/components/link";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
+import { localizePath } from "@/lib/i18n/config";
 import { absoluteUrl } from "@/lib/seo";
 import { JsonLd } from "./json-ld";
 
 export type Crumb = { name: string; path: string };
 
 /** Visible breadcrumb trail plus the matching BreadcrumbList for search results. */
-export function Breadcrumbs({ items }: { items: Crumb[] }) {
+export async function Breadcrumbs({ items }: { items: Crumb[] }) {
+  const [t, locale] = await Promise.all([getDictionary(), getLocale()]);
   return (
-    <nav aria-label="Brotkrümelnavigation" className="text-sm text-zinc-400">
+    <nav aria-label={t.common.breadcrumbs} className="text-sm text-muted">
       <JsonLd
         data={{
           "@context": "https://schema.org",
@@ -16,20 +19,24 @@ export function Breadcrumbs({ items }: { items: Crumb[] }) {
             "@type": "ListItem",
             position: i + 1,
             name: item.name,
-            item: absoluteUrl(item.path),
+            item: absoluteUrl(localizePath(item.path, locale)),
           })),
         }}
       />
       <ol className="flex flex-wrap items-center gap-1.5">
         {items.map((item, i) => (
           <li key={item.path} className="flex items-center gap-1.5">
-            {i > 0 && <span aria-hidden className="text-zinc-600">/</span>}
+            {i > 0 && (
+              <span aria-hidden className="text-subtle">
+                /
+              </span>
+            )}
             {i === items.length - 1 ? (
-              <span aria-current="page" className="text-zinc-300">
+              <span aria-current="page" className="font-medium text-fg">
                 {item.name}
               </span>
             ) : (
-              <Link href={item.path} className="hover:text-zinc-200">
+              <Link href={item.path} className="transition hover:text-fg">
                 {item.name}
               </Link>
             )}

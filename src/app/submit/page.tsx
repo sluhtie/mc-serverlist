@@ -1,21 +1,21 @@
+import type { Metadata } from "next";
 import { ServerForm } from "@/components/forms/server-form";
+import { SectionHeading } from "@/components/section-heading";
 import { requireUser } from "@/lib/auth/session";
+import { getDictionary } from "@/lib/i18n/server";
 import { NOINDEX } from "@/lib/seo";
 
 // Visitors without an account are redirected to the login, so there is nothing to index.
-export const metadata = { title: "Server eintragen", robots: NOINDEX };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getDictionary()).meta.submit, robots: NOINDEX };
+}
 
 export default async function SubmitPage() {
   await requireUser("/submit");
+  const t = await getDictionary();
   return (
     <div className="mx-auto max-w-3xl space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold">Server eintragen</h1>
-        <p className="mt-2 text-zinc-400">
-          Trage deinen Minecraft Server kostenlos ein. Status und Spielerzahlen werden automatisch
-          alle paar Minuten aktualisiert.
-        </p>
-      </div>
+      <SectionHeading as="h1" eyebrow={t.home.ownerEyebrow} title={t.submit.title} subtitle={t.submit.intro} />
       <ServerForm />
     </div>
   );

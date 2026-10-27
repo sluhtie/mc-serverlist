@@ -1,9 +1,13 @@
+import { INTL_LOCALE } from "@/lib/i18n/config";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
+
 type Point = { online: boolean; players: number; at: Date };
 
 /** Lightweight SVG area chart, rendered on the server. */
-export function PlayerChart({ points }: { points: Point[] }) {
+export async function PlayerChart({ points }: { points: Point[] }) {
+  const [t, locale] = await Promise.all([getDictionary(), getLocale()]);
   if (points.length < 2) {
-    return <p className="text-sm text-zinc-500">Noch nicht genug Daten für einen Verlauf.</p>;
+    return <p className="text-sm text-subtle">{t.server.chartEmpty}</p>;
   }
   const width = 600;
   const height = 140;
@@ -20,27 +24,40 @@ export function PlayerChart({ points }: { points: Point[] }) {
 
   return (
     <div>
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="h-36 w-full"
-        preserveAspectRatio="none"
-        role="img"
-        aria-label={`Spielerverlauf, Höchstwert ${peak}`}
-      >
-        <polygon points={`0,${height} ${coords.join(" ")} ${width},${height}`} className="fill-brand-500/15" />
-        <polyline
-          points={coords.join(" ")}
-          className="fill-none stroke-brand-400"
-          strokeWidth={2}
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
-      <div className="mt-2 flex justify-between text-xs text-zinc-500">
-        <span>{points[0].at.toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}</span>
-        <span>
-          Ø {avg} · Peak {peak}
-        </span>
-        <span>Jetzt</span>
+      <div className="relative">
+        {/* Horizontal guides at a quarter of the height each. */}
+        <div aria-hidden className="absolute inset-0 flex flex-col justify-between">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="border-t border-dashed border-line" />
+          ))}
+        </div>
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          className="relative h-40 w-full"
+          preserveAspectRatio="none"
+          role="img"
+          aria-label={t.server.chartLabel(peak)}
+        >
+          <defs>
+            <linearGradient id="player-chart-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#22c55e" stopOpacity=".35" />
+              <stop offset="1" stopColor="#22c55e" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <polygon points={`0,${height} ${coords.join(" ")} ${width},${height}`} fill="url(#player-chart-fill)" />
+          <polyline
+            points={coords.join(" ")}
+            className="fill-none stroke-brand-500"
+            strokeWidth={2.5}
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+      </div>
+      <div className="mt-3 flex justify-between text-xs text-subtle">
+        <span>{points[0].at.toLocaleString(INTL_LOCALE[locale], { dateStyle: "short", timeStyle: "short" })}</span>
+        <span className="font-pixel text-sm text-muted">{t.server.chartSummary(avg, peak)}</span>
+        <span>{t.server.now}</span>
       </div>
     </div>
   );

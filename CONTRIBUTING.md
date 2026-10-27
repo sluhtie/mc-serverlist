@@ -56,7 +56,7 @@ and list it as `127.0.0.1` (or `host.docker.internal` from inside Docker). Insta
 - [ ] Lint, typecheck, tests and build pass
 - [ ] New logic has tests
 - [ ] Migrations are generated and committed (if the schema changed)
-- [ ] UI texts are German, code and comments English
+- [ ] UI texts in both dictionaries (German and English), code and comments English
 - [ ] No secrets, `.env` files or unrelated formatting changes
 
 ## Using AI coding agents
