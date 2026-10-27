@@ -65,7 +65,7 @@ See [`.env.example`](.env.example) for the full list.
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `DATABASE_URL` | yes | PostgreSQL connection string |
+| `DATABASE_URL` | yes* | PostgreSQL connection string. *Alternatively set `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` (used by the production compose file) |
 | `APP_URL` | yes (prod) | Public URL, e.g. `https://servers.example.com` |
 | `APP_SECRET` | yes (prod) | Random secret used to hash IPs (`openssl rand -base64 48`) |
 | `ADMIN_EMAILS` | no | Comma-separated e-mails that become admins |
