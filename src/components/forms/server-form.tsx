@@ -6,6 +6,7 @@ import { COUNTRIES, MAX_TAGS, TAGS } from "@/lib/constants";
 import type { FormState } from "@/lib/form";
 import { createServer, updateServer } from "@/server/actions/servers";
 import { FieldError, FormMessage } from "./form-message";
+import { MarkdownEditor } from "./markdown-editor";
 
 export type ServerFormValues = {
   id?: string;
@@ -130,14 +131,7 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
           <label className="label" htmlFor="description">
             Beschreibung
           </label>
-          <textarea
-            id="description"
-            name="description"
-            defaultValue={values.description}
-            rows={8}
-            maxLength={5000}
-            className="input"
-          />
+          <MarkdownEditor id="description" name="description" defaultValue={values.description} maxLength={5000} />
           <FieldError state={state} name="description" />
         </div>
       </fieldset>
