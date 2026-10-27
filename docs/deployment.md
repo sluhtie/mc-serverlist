@@ -22,6 +22,13 @@ POSTGRES_PASSWORD=<long random password>
 ADMIN_EMAILS=you@example.com
 SITE_NAME=MCServerlist
 
+# e-mail (address confirmation, password reset, security notices)
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=noreply@mc-serverlist.net
+SMTP_PASSWORD=<smtp password>
+MAIL_FROM=MCServerlist <noreply@mc-serverlist.net>
+
 # optional
 TURNSTILE_SITE_KEY=
 TURNSTILE_SECRET_KEY=
@@ -32,6 +39,23 @@ TZ=Europe/Berlin
 Dokploy writes these to a `.env` file next to the compose file, and the compose file
 interpolates them into the containers. The deployment fails early with a clear message if
 `APP_URL`, `APP_SECRET` or `POSTGRES_PASSWORD` is missing.
+
+### E-mail
+
+New accounts must confirm their e-mail address before they can add a server, and password
+resets go out by mail, so **SMTP is required in production**. Any provider works (Mailjet,
+Brevo, Postmark, Amazon SES, your host's mail server, …):
+
+- Port `587` uses STARTTLS, port `465` implicit TLS (`SMTP_SECURE` is set automatically for 465).
+- Use a sender on your own domain (`MAIL_FROM`) and add the provider's **SPF** and **DKIM**
+  records to your DNS, plus a **DMARC** record, otherwise mails end up in spam.
+- Without `SMTP_HOST` the app logs a warning instead of sending. Admins can confirm an address
+  by hand under **Admin → Benutzer** if a mail never arrives.
+
+To test, register a new account and check that the confirmation mail arrives.
+
+> `APP_SECRET` also encrypts the users' 2FA secrets. If you change it, everyone with an
+> authenticator app has to be reset under **Admin → Benutzer → 2FA zurücksetzen**.
 
 > Do not change `POSTGRES_PASSWORD` after the first deployment: Postgres only reads it when the
 > volume is initialised. Change the password inside the database instead.

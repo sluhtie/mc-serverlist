@@ -7,7 +7,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { db, schema } from "@/lib/db";
 import { str } from "@/lib/form";
 
-const { servers, users, reports, sessions } = schema;
+const { servers, users, reports, sessions, recoveryCodes } = schema;
 
 export async function setPublished(formData: FormData) {
   await requireAdmin();
@@ -58,6 +58,22 @@ export async function setBanned(formData: FormData) {
   }
   revalidatePath("/admin/users");
   revalidatePath("/");
+}
+
+/** For users whose confirmation mail never arrived. */
+export async function markEmailVerified(formData: FormData) {
+  await requireAdmin();
+  await db.update(users).set({ emailVerifiedAt: new Date() }).where(eq(users.id, str(formData, "id")));
+  revalidatePath("/admin/users");
+}
+
+/** Support case: user lost both the authenticator and the recovery codes. */
+export async function resetTwoFactor(formData: FormData) {
+  await requireAdmin();
+  const id = str(formData, "id");
+  await db.update(users).set({ totpSecret: null, totpEnabledAt: null, totpLastStep: null }).where(eq(users.id, id));
+  await db.delete(recoveryCodes).where(eq(recoveryCodes.userId, id));
+  revalidatePath("/admin/users");
 }
 
 export async function setReportStatus(formData: FormData) {

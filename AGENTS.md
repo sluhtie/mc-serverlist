@@ -51,6 +51,9 @@ src/
     db/schema.ts       Single source of truth for the database schema.
     db/index.ts        Drizzle client (`db`, `schema`).
     auth/session.ts    Cookie sessions: getCurrentUser, requireUser, requireAdmin.
+    auth/              tokens.ts (single-use e-mail/login tokens), totp.ts (RFC 6238 2FA),
+                       two-factor.ts, verification.ts, crypto.ts (token hashing, secret encryption).
+    mail/              index.ts (SMTP via nodemailer, sendMail/queueMail), templates.ts (DE/EN mails).
     minecraft/         Protocol code: ping.ts (SLP), motd.ts, votifier.ts, address.ts (SSRF guard),
                        skin.ts + png.ts (player heads via the Mojang API), player.ts (name rules).
     servers.ts         Read queries for server listings and stats.
@@ -107,6 +110,12 @@ public/brand/          Source SVGs of the logo and app icon. The PNG/ICO icons i
 - Escape user input for `LIKE` queries; rate-limit endpoints that can be abused.
 - Render user content as text. Do not introduce `dangerouslySetInnerHTML`; structured data goes
   through `components/json-ld.tsx`, which escapes the payload.
+- Tokens sent by e-mail or kept in cookies are stored only as SHA-256 hashes (`lib/auth/tokens.ts`).
+  Forms that reveal whether an address has an account (password reset) must answer the same either way.
+- Mails go through `queueMail()`/`sendMail()` in `lib/mail`. New mail texts go into `templates.ts`
+  in both languages; escape every interpolated value in the HTML part.
+- Adding servers requires a confirmed e-mail address (`SessionUser.emailVerified`); check it in
+  the action, not only in the page.
 
 ### Code style
 - TypeScript strict, no `any`. Prefer small, typed functions over classes.

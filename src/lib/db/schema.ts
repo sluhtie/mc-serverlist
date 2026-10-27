@@ -16,6 +16,12 @@ import {
 export const roleEnum = pgEnum("role", ["user", "admin"]);
 export const votifierProtocolEnum = pgEnum("votifier_protocol", ["v1", "v2"]);
 export const reportStatusEnum = pgEnum("report_status", ["open", "resolved"]);
+export const tokenPurposeEnum = pgEnum("token_purpose", [
+  "verify_email",
+  "change_email",
+  "reset_password",
+  "login_2fa",
+]);
 
 export const users = pgTable(
   "users",
@@ -26,6 +32,12 @@ export const users = pgTable(
     passwordHash: text("password_hash").notNull(),
     role: roleEnum("role").notNull().default("user"),
     banned: boolean("banned").notNull().default(false),
+    emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
+    // TOTP secret, encrypted with APP_SECRET. Set but not enabled while setup is unconfirmed.
+    totpSecret: text("totp_secret"),
+    totpEnabledAt: timestamp("totp_enabled_at", { withTimezone: true }),
+    // Last accepted time step, so a code cannot be used twice.
+    totpLastStep: integer("totp_last_step"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -46,6 +58,37 @@ export const sessions = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("sessions_user_idx").on(t.userId)],
+);
+
+/** Single-use links and challenges sent by e-mail or kept between login steps. */
+export const userTokens = pgTable(
+  "user_tokens",
+  {
+    // SHA-256 of the token; the plain token only exists in the e-mail or cookie.
+    id: varchar("id", { length: 64 }).primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    purpose: tokenPurposeEnum("purpose").notNull(),
+    // Target address for change_email, the address the link was sent to otherwise.
+    email: varchar("email", { length: 255 }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("user_tokens_user_idx").on(t.userId, t.purpose)],
+);
+
+export const recoveryCodes = pgTable(
+  "recovery_codes",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    codeHash: varchar("code_hash", { length: 64 }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+  },
+  (t) => [index("recovery_codes_user_idx").on(t.userId)],
 );
 
 export const servers = pgTable(

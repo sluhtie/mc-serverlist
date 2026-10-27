@@ -10,12 +10,15 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
-  const { next } = await searchParams;
+  const { next, reset, expired } = await searchParams;
   if (await getCurrentUser()) await localRedirect("/account");
   const t = await getDictionary();
   return (
     <AuthShell title={t.auth.loginTitle} subtitle={t.auth.loginSubtitle}>
-      <LoginForm next={typeof next === "string" ? next : undefined} />
+      <LoginForm
+        next={typeof next === "string" ? next : undefined}
+        notice={reset ? { success: t.auth.resetDone } : expired ? { error: t.auth.challengeExpired } : undefined}
+      />
     </AuthShell>
   );
 }

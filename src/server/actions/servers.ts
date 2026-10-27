@@ -118,6 +118,8 @@ async function addressTaken(host: string, port: number, ignoreId?: string) {
 
 export async function createServer(_prev: FormState, formData: FormData): Promise<FormState> {
   const [user, t] = await Promise.all([requireUser("/submit"), getDictionary()]);
+  // Confirmed addresses keep throwaway accounts from flooding the list.
+  if (!user.emailVerified) return { error: t.errors.emailNotVerified };
   if (!rateLimit(`submit:${user.id}`, 5, 60 * 60 * 1000)) {
     return { error: t.errors.tooManySubmissions };
   }
