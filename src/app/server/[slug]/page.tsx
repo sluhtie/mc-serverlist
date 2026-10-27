@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CopyAddress } from "@/components/copy-address";
 import { ReportForm } from "@/components/forms/report-form";
+import { Markdown } from "@/components/markdown";
 import { Motd } from "@/components/motd";
 import { PlayerChart } from "@/components/player-chart";
 import { formatAddress } from "@/components/server-card";
@@ -124,9 +125,11 @@ export default async function ServerPage({ params, searchParams }: PageProps<"/s
           )}
           <section className="card space-y-3 p-6">
             <h2 className="font-semibold">Über den Server</h2>
-            <p className="whitespace-pre-line text-zinc-300">
-              {server.description || server.shortDescription}
-            </p>
+            {server.description ? (
+              <Markdown>{server.description}</Markdown>
+            ) : (
+              <p className="text-zinc-300">{server.shortDescription}</p>
+            )}
           </section>
           <section className="card space-y-3 p-6">
             <h2 className="font-semibold">Spieler in den letzten 24 Stunden</h2>
