@@ -29,6 +29,14 @@ SMTP_USER=noreply@mc-serverlist.net
 SMTP_PASSWORD=<smtp password>
 MAIL_FROM=MCServerlist <noreply@mc-serverlist.net>
 
+# operator for the imprint and privacy policy (kept out of the public repository)
+LEGAL_NAME=Max Mustermann
+LEGAL_ADDRESS=Musterstraße 1, 12345 Berlin
+LEGAL_EMAIL=kontakt@example.com
+LEGAL_PHONE=
+LEGAL_HOSTING=Example Hosting GmbH, Beispielweg 2, 54321 Hamburg
+LEGAL_MAIL_PROVIDER=
+
 # optional
 TURNSTILE_SITE_KEY=
 TURNSTILE_SECRET_KEY=

@@ -510,18 +510,151 @@ export const en: Dictionary = {
     headAfter: "between 8 and 256 pixels. Unknown names get a placeholder head instead of an error.",
   },
   legal: {
-    privacyTitle: "Privacy policy",
-    privacyPlaceholder: "Placeholder: please replace with the operator's complete privacy policy",
-    storedTitle: "What this software stores",
-    storedAccount: "Account data: email, username, password hash (bcrypt).",
-    storedSession: "A session cookie, technically required for logging in:",
-    storedPrefs: "Optionally a cookie with your chosen color scheme (mcsl_theme) once you change it.",
-    storedVotes:
-      "Votes: Minecraft name, time and a salted hash of the IP address to prevent abuse. The IP itself is not stored, but is sent to the Minecraft server when Votifier is enabled.",
-    storedTurnstile: "Optionally Cloudflare Turnstile when voting, if enabled by the operator.",
+    missingOperator:
+      "The operator details are still missing. Set LEGAL_NAME, LEGAL_ADDRESS and LEGAL_EMAIL in the server configuration.",
     imprintTitle: "Legal notice",
-    imprintText: "Information according to § 5 DDG. Please replace this placeholder in",
-    imprintSuffix: "with the operator's details.",
+    imprintProvider: "Information according to § 5 DDG (German Digital Services Act)",
+    contact: "Contact",
+    phone: "Phone",
+    email: "Email",
+    responsible: "Responsible for the content according to § 18 (2) MStV",
+    imprintSections: [
+      {
+        title: "Consumer dispute resolution",
+        paragraphs: [
+          "We are neither willing nor obliged to take part in dispute resolution proceedings before a consumer arbitration board.",
+        ],
+      },
+      {
+        title: "Liability for content",
+        paragraphs: [
+          "Minecraft server entries (name, description, banner, links and vote rewards) are created by the respective server owners, who are responsible for them. We do not review them in advance. As soon as we learn of a legal violation, we remove the content right away. Use the report button on the server page or write to us.",
+          "We are not affiliated with Mojang Studios or Microsoft. Minecraft is a trademark of Mojang Synergies AB.",
+        ],
+      },
+      {
+        title: "Liability for links",
+        paragraphs: [
+          "The server list links to third-party websites and Discord servers. Their operators alone are responsible for their content. No illegal content was apparent when the links were added. If you find a problematic link, report it and we will remove it.",
+        ],
+      },
+    ],
+    privacyTitle: "Privacy policy",
+    privacyIntro: (site) =>
+      `This page explains which personal data ${site} processes, why, and on which legal basis. We only process what is needed to run the server list: no tracking, no analytics tools, no ads and no third-party cookies.`,
+    controllerTitle: "Controller",
+    updated: "Last updated: October 2026",
+    privacySections: (c) => {
+      const contact = c.email ? `by email to ${c.email}` : "using the contact details in the legal notice";
+      return [
+        {
+          title: "Hosting",
+          paragraphs: [
+            `The website runs on a dedicated server that we rent and administer ourselves${
+              c.hosting ? `. The server is provided by ${c.hosting}` : ""
+            }. All data (including the database) is stored on this server. The provider only supplies the hardware and network connection and processes data on our behalf (Art. 28 GDPR). The legal basis is our legitimate interest in secure and reliable operation (Art. 6 (1) (f) GDPR).`,
+          ],
+        },
+        {
+          title: "Visiting the website",
+          paragraphs: [
+            "With every request, your browser sends technically required data to our server: IP address, date and time, requested address, referrer, browser and operating system (user agent). We need it to deliver the page and to fend off abuse (Art. 6 (1) (f) GDPR).",
+            "The application does not write IP addresses to log files. To rate-limit requests (for example login, registration, votes and reports) it keeps the IP address in memory for at most one hour and then discards it.",
+          ],
+        },
+        {
+          title: "Cookies",
+          paragraphs: [
+            "We only set cookies that the website needs or that you trigger yourself. They do not require consent (§ 25 (2) no. 2 TDDDG).",
+          ],
+          items: [
+            "mcsl_session: keeps you logged in, valid until you log out or for at most 30 days. On the server we only store a hash of the cookie value.",
+            "mcsl_2fa: links the two steps of a login with two-factor authentication, valid for 10 minutes.",
+            "mcsl_theme: remembers your color scheme (light or dark), only once you change it, valid for 1 year.",
+          ],
+        },
+        {
+          title: "User account",
+          paragraphs: [
+            "For an account we store your email address, your username, a hash of your password (bcrypt, we never know the password itself), and when you registered and confirmed your email address. If you turn on two-factor authentication, the encrypted TOTP secret and hashes of your recovery codes are added.",
+            "We process this data to provide your account (Art. 6 (1) (b) GDPR). It is kept until you have your account deleted. To do so, write to us " +
+              contact +
+              ". Servers you added are deleted along with it.",
+          ],
+        },
+        {
+          title: "Emails",
+          paragraphs: [
+            `We send you emails that belong to your account: confirming your address, resetting your password and security notices (for example when your login details change). We do not send newsletters or ads. They are sent via an SMTP server${
+              c.mailProvider ? ` run by ${c.mailProvider}` : ""
+            }, which processes the email address and the message content for delivery. Links in these emails contain single-use codes that we only store as hashes and that expire after 48 hours at most. The legal basis is Art. 6 (1) (b) GDPR.`,
+          ],
+        },
+        {
+          title: "Adding a server",
+          paragraphs: [
+            "When you add a Minecraft server, we store the details from the form (name, address, descriptions, website, Discord, banner, country, game modes and Votifier settings) and link the entry to your account. Except for the Votifier settings, these details are public and available through our API, because that is what the server list is for (Art. 6 (1) (b) GDPR).",
+            "For the live status we regularly connect to the server and store its status, version, MOTD, server icon and number of players. We do not request player names. The player count history is deleted after 30 days.",
+          ],
+        },
+        {
+          title: "Voting",
+          paragraphs: [
+            "For a vote we store your Minecraft name, the server, the time, your account (if you are logged in) and a salted hash of your IP address. The hash ensures that each person votes only once every 24 hours; the IP address cannot be derived from it. The legal basis is Art. 6 (1) (b) and (f) GDPR (a fair ranking, protection against manipulation).",
+            "Your Minecraft name is public: it appears with your skin head in the top voters list on the server page, and server owners can use our API to check whether a name voted in the last 24 hours in order to hand out rewards. Votes are kept as long as the server is listed.",
+            "If the server has set up Votifier, we send your Minecraft name, your IP address and the time directly to the Minecraft server so you receive your reward in the game. The respective server owner is responsible for any further processing there.",
+          ],
+        },
+        {
+          title: "Player heads",
+          paragraphs: [
+            "We load the heads next to Minecraft names on our server through Mojang's public API (Mojang AB, Microsoft), using the name. Your browser does not connect to Mojang, and Mojang only receives the Minecraft name, not your IP address. The images are cached for at most 6 hours.",
+          ],
+        },
+        {
+          title: "Content from server owners",
+          paragraphs: [
+            "Banners and images in server descriptions are embedded directly from the addresses the server owner entered. When they are shown, your browser loads them from there, so the respective provider receives your IP address and browser data. Links to websites and Discord servers are only opened when you click them.",
+          ],
+        },
+        ...(c.turnstile
+          ? [
+              {
+                title: "Cloudflare Turnstile",
+                paragraphs: [
+                  "On the vote page we use Cloudflare Turnstile to protect against automated votes. The provider is Cloudflare, Inc., 101 Townsend St., San Francisco, CA 94107, USA. Turnstile checks characteristics of your browser and connection (including the IP address) and does not set advertising cookies. The legal basis is our legitimate interest in fair votes (Art. 6 (1) (f) GDPR). Cloudflare is certified under the EU-US Data Privacy Framework. More: https://www.cloudflare.com/privacypolicy/",
+                ],
+              },
+            ]
+          : []),
+        {
+          title: "Reports",
+          paragraphs: [
+            "When you report a server, we store the reason, your message, the time and, if you are logged in, your account. We only use this to handle the report (Art. 6 (1) (f) GDPR).",
+          ],
+        },
+        {
+          title: "Fonts",
+          paragraphs: [
+            "All fonts are served from our own server. Your browser does not connect to Google or other providers for them.",
+          ],
+        },
+        {
+          title: "Contact",
+          paragraphs: [
+            "When you write to us, we process your details to answer your request (Art. 6 (1) (b) or (f) GDPR) and delete them once it is settled and no retention obligation applies.",
+          ],
+        },
+        {
+          title: "Your rights",
+          paragraphs: [
+            `You have the right of access (Art. 15 GDPR), rectification (Art. 16), erasure (Art. 17), restriction of processing (Art. 18), data portability (Art. 20) and to object to processing based on legitimate interests (Art. 21). Contact us ${contact}.`,
+            "You can also lodge a complaint with a data protection supervisory authority, for example the one where you live or the one responsible for us.",
+            "The connection to the website is encrypted with TLS. There is no automated decision-making or profiling.",
+          ],
+        },
+      ];
+    },
   },
   notFound: {
     title: "Nothing but air here",

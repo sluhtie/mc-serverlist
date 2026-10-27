@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { LegalSections, OperatorAddress, OperatorContact } from "@/components/legal-sections";
+import { env } from "@/lib/env";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
+import { isLegalOperatorComplete } from "@/lib/legal";
 import { pageMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -14,12 +17,34 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ImpressumPage() {
   const t = await getDictionary();
+  const operator = env.legal;
   return (
-    <article className="card mx-auto max-w-3xl space-y-4 p-8">
-      <h1 className="font-display text-3xl font-extrabold tracking-tight">{t.legal.imprintTitle}</h1>
-      <p className="text-muted">
-        {t.legal.imprintText} <code>src/app/impressum/page.tsx</code> {t.legal.imprintSuffix}
-      </p>
+    <article className="card mx-auto max-w-3xl space-y-4 p-8 text-fg-soft">
+      <h1 className="font-display text-3xl font-extrabold tracking-tight text-fg">{t.legal.imprintTitle}</h1>
+      {!isLegalOperatorComplete(operator) && (
+        <p className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-warn">
+          {t.legal.missingOperator}
+        </p>
+      )}
+
+      <section className="space-y-3">
+        <h2 className="pt-2 font-display text-xl font-bold text-fg">{t.legal.imprintProvider}</h2>
+        <OperatorAddress name={operator.name} address={operator.address} />
+      </section>
+
+      {(operator.phone || operator.email) && (
+        <section className="space-y-3">
+          <h2 className="pt-2 font-display text-xl font-bold text-fg">{t.legal.contact}</h2>
+          <OperatorContact phone={operator.phone} email={operator.email} labels={t.legal} />
+        </section>
+      )}
+
+      <section className="space-y-3">
+        <h2 className="pt-2 font-display text-xl font-bold text-fg">{t.legal.responsible}</h2>
+        <OperatorAddress name={operator.name} address={operator.address} />
+      </section>
+
+      <LegalSections sections={t.legal.imprintSections} />
     </article>
   );
 }
