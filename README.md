@@ -41,7 +41,7 @@ docker compose up
 
 Open <http://localhost:3000> and register with `admin@example.com` to get admin rights
 (change it with `ADMIN_EMAILS=you@example.com docker compose up`). The source is mounted into the
-container, so changes reload instantly. Postgres is reachable on `localhost:5432` (`mcsl`/`mcsl`).
+container, so changes reload instantly. Postgres is reachable on `localhost:5432` (user `mcsl`, any password).
 
 Local development uses `ALLOW_PRIVATE_ADDRESSES=true`, so you can list a Minecraft server
 running on your own machine or LAN.
