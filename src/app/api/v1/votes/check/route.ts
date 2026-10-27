@@ -1,6 +1,7 @@
 import { and, eq, gt, sql } from "drizzle-orm";
 import { VOTE_COOLDOWN_HOURS } from "@/lib/constants";
 import { db, schema } from "@/lib/db";
+import { isValidPlayerName } from "@/lib/minecraft/player";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const slug = url.searchParams.get("server") ?? "";
   const username = url.searchParams.get("username") ?? "";
-  if (!slug || !/^[A-Za-z0-9_]{3,16}$/.test(username)) {
+  if (!slug || !isValidPlayerName(username)) {
     return Response.json({ error: "invalid_parameters" }, { status: 400 });
   }
   const { servers, votes } = schema;

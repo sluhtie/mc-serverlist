@@ -8,6 +8,7 @@ import { VOTE_COOLDOWN_HOURS } from "@/lib/constants";
 import { db, schema } from "@/lib/db";
 import { env } from "@/lib/env";
 import { str, type FormState } from "@/lib/form";
+import { PLAYER_NAME_PATTERN } from "@/lib/minecraft/player";
 import { sendVote } from "@/lib/minecraft/votifier";
 import { getClientIp, hashIp, rateLimit, verifyTurnstile } from "@/lib/security";
 
@@ -15,7 +16,7 @@ const { servers, votes } = schema;
 
 const usernameSchema = z
   .string()
-  .regex(/^[A-Za-z0-9_]{3,16}$/, "Gib deinen Minecraft-Namen ein (3–16 Zeichen, A–Z, 0–9, _)");
+  .regex(PLAYER_NAME_PATTERN, "Gib deinen Minecraft-Namen ein (3–16 Zeichen, A–Z, 0–9, _)");
 
 export async function castVote(_prev: FormState, formData: FormData): Promise<FormState> {
   const ip = await getClientIp();

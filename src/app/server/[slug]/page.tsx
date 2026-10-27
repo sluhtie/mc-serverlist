@@ -5,6 +5,7 @@ import { CopyAddress } from "@/components/copy-address";
 import { ReportForm } from "@/components/forms/report-form";
 import { Motd } from "@/components/motd";
 import { PlayerChart } from "@/components/player-chart";
+import { PlayerHead } from "@/components/player-head";
 import { formatAddress } from "@/components/server-card";
 import { ServerIcon } from "@/components/server-icon";
 import { StatusBadge } from "@/components/status-badge";
@@ -184,9 +185,11 @@ export default async function ServerPage({ params, searchParams }: PageProps<"/s
             ) : (
               <ol className="space-y-1">
                 {topVoters.map((v, i) => (
-                  <li key={v.username} className="flex justify-between">
-                    <span className="font-mono">
-                      {i + 1}. {v.username}
+                  <li key={v.username} className="flex items-center justify-between gap-3">
+                    <span className="flex min-w-0 items-center gap-2 font-mono">
+                      <span className="w-5 text-right text-zinc-500">{i + 1}.</span>
+                      <PlayerHead name={v.username} size={20} />
+                      <span className="truncate">{v.username}</span>
                     </span>
                     <span className="text-zinc-400">{v.count}</span>
                   </li>

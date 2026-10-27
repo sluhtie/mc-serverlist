@@ -50,7 +50,8 @@ src/
     db/schema.ts       Single source of truth for the database schema.
     db/index.ts        Drizzle client (`db`, `schema`).
     auth/session.ts    Cookie sessions: getCurrentUser, requireUser, requireAdmin.
-    minecraft/         Protocol code: ping.ts (SLP), motd.ts, votifier.ts, address.ts (SSRF guard).
+    minecraft/         Protocol code: ping.ts (SLP), motd.ts, votifier.ts, address.ts (SSRF guard),
+                       skin.ts + png.ts (player heads via the Mojang API), player.ts (name rules).
     servers.ts         Read queries for server listings and stats.
     env.ts             All runtime configuration. Never read process.env elsewhere.
     security.ts        Client IP, IP hashing, rate limiting, Turnstile.
