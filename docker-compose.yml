@@ -1,0 +1,51 @@
+# Local development: hot reload, source mounted into the container.
+#   docker compose up
+# App: http://localhost:3000 · Postgres: localhost:5432 (mcsl/mcsl)
+name: mc-serverlist-dev
+
+services:
+  app:
+    build:
+      context: .
+      target: dev
+    command: sh -c "npm install && npm run dev -- --hostname 0.0.0.0"
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://mcsl:mcsl@db:5432/mcsl
+      APP_URL: http://localhost:3000
+      APP_SECRET: dev-secret-change-me
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-admin@example.com}
+      STATUS_INTERVAL_SECONDS: ${STATUS_INTERVAL_SECONDS:-120}
+      ALLOW_PRIVATE_ADDRESSES: ${ALLOW_PRIVATE_ADDRESSES:-true}
+      TZ: Europe/Berlin
+      # File watching through Docker volumes on macOS/Windows
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - next_cache:/app/.next
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: mcsl
+      POSTGRES_PASSWORD: mcsl
+      POSTGRES_DB: mcsl
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mcsl -d mcsl"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  node_modules:
+  next_cache:
+  db_data:
