@@ -16,6 +16,7 @@ export function ServerIcon({
         alt=""
         width={size}
         height={size}
+        decoding="async"
         className="shrink-0 rounded-md [image-rendering:pixelated]"
       />
     );

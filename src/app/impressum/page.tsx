@@ -1,4 +1,10 @@
-export const metadata = { title: "Impressum" };
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "Impressum",
+  description: "Impressum und Kontaktangaben der Minecraft Serverliste.",
+  path: "/impressum",
+});
 
 export default function ImpressumPage() {
   return (

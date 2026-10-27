@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ServerListItem } from "@/lib/servers";
+import { knownTag, tagHref } from "@/lib/tags";
 import { CopyAddress } from "./copy-address";
 import { ServerIcon } from "./server-icon";
 import { StatusBadge } from "./status-badge";
@@ -52,19 +53,29 @@ export function ServerCard({ server, rank }: { server: ServerListItem; rank?: nu
             <img
               src={server.bannerUrl}
               alt={`${server.name} Banner`}
+              width={468}
+              height={60}
               className="h-[60px] w-full max-w-[468px] rounded-md object-cover"
               loading="lazy"
+              decoding="async"
             />
           </Link>
         ) : (
           <p className="line-clamp-2 text-sm text-zinc-400">{server.shortDescription}</p>
         )}
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {server.tags.slice(0, 4).map((tag) => (
-            <Link key={tag} href={`/?tag=${encodeURIComponent(tag)}`} className="tag hover:bg-zinc-700">
-              {tag}
-            </Link>
-          ))}
+          {server.tags.slice(0, 4).map((tag) => {
+            const known = knownTag(tag);
+            return known ? (
+              <Link key={tag} href={tagHref(known)} className="tag hover:bg-zinc-700">
+                {tag}
+              </Link>
+            ) : (
+              <span key={tag} className="tag">
+                {tag}
+              </span>
+            );
+          })}
           {server.version && (
             <span className="tag max-w-48 truncate bg-sky-500/10 text-sky-300">
               {server.version}
@@ -73,7 +84,7 @@ export function ServerCard({ server, rank }: { server: ServerListItem; rank?: nu
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-4 sm:w-56 sm:shrink-0 sm:flex-col sm:items-end">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 sm:w-56 sm:shrink-0 sm:flex-col sm:items-end">
         <CopyAddress address={formatAddress(server.host, server.port)} />
         <div className="flex gap-4 text-sm text-zinc-400">
           <span title="Spieler online">

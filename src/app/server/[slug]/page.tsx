@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CopyAddress } from "@/components/copy-address";
 import { ReportForm } from "@/components/forms/report-form";
+import { JsonLd } from "@/components/json-ld";
 import { Markdown } from "@/components/markdown";
 import { Motd } from "@/components/motd";
 import { PlayerChart } from "@/components/player-chart";
@@ -12,6 +14,7 @@ import { ServerIcon } from "@/components/server-icon";
 import { StatusBadge } from "@/components/status-badge";
 import { getCurrentUser } from "@/lib/auth/session";
 import { COUNTRIES } from "@/lib/constants";
+import { absoluteUrl, pageMetadata, truncate } from "@/lib/seo";
 import {
   getPlayerHistory,
   getServerBySlug,
@@ -19,6 +22,7 @@ import {
   getTopVoters,
   getUptime,
 } from "@/lib/servers";
+import { knownTag, tagHref } from "@/lib/tags";
 import { refreshStatusNow } from "@/server/actions/servers";
 
 export async function generateMetadata({
@@ -27,11 +31,19 @@ export async function generateMetadata({
   const { slug } = await params;
   const result = await getServerBySlug(slug);
   if (!result) return { title: "Server nicht gefunden" };
-  const { server } = result;
-  return {
-    title: `${server.name} – ${formatAddress(server.host, server.port)}`,
-    description: server.shortDescription,
-  };
+  const { server, monthlyVotes } = result;
+  const address = formatAddress(server.host, server.port);
+  const status = server.online
+    ? `${server.playersOnline}/${server.playersMax} Spieler online`
+    : "Aktuell offline";
+  return pageMetadata({
+    title: `${server.name} – Minecraft Server IP: ${address}`,
+    // Lead with the server's own pitch, then the facts people search for (IP, players).
+    description: `${truncate(server.shortDescription, 90)} IP: ${address} · ${status} · ${monthlyVotes} Votes diesen Monat.`,
+    path: `/server/${server.slug}`,
+    index: server.published,
+    ownImage: true,
+  });
 }
 
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
@@ -59,9 +71,36 @@ export default async function ServerPage({ params, searchParams }: PageProps<"/s
     getTopVoters(server.id),
   ]);
   const address = formatAddress(server.host, server.port);
+  const mainTag = knownTag(server.tags[0]);
+  const url = absoluteUrl(`/server/${server.slug}`);
 
   return (
     <div className="space-y-6">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "GameServer",
+          "@id": `${url}#server`,
+          name: server.name,
+          url,
+          description: server.shortDescription,
+          // The server address is what players search for, so expose it as an identifier.
+          identifier: address,
+          ...(server.bannerUrl ? { image: server.bannerUrl } : {}),
+          serverStatus: server.online ? "https://schema.org/Online" : "https://schema.org/OfflineTemporarily",
+          playersOnline: server.online ? server.playersOnline : 0,
+          game: { "@type": "VideoGame", name: "Minecraft", url: "https://www.minecraft.net" },
+          dateCreated: server.createdAt.toISOString(),
+          dateModified: server.updatedAt.toISOString(),
+        }}
+      />
+      <Breadcrumbs
+        items={[
+          { name: "Startseite", path: "/" },
+          ...(mainTag ? [{ name: `${mainTag} Server`, path: tagHref(mainTag) }] : []),
+          { name: server.name, path: `/server/${server.slug}` },
+        ]}
+      />
       {sp.created && (
         <p className="rounded-lg border border-brand-500/40 bg-brand-500/10 px-4 py-3 text-sm text-brand-300">
           Dein Server ist jetzt gelistet! Teile den Vote-Link mit deiner Community:{" "}
@@ -84,11 +123,18 @@ export default async function ServerPage({ params, searchParams }: PageProps<"/s
           </div>
           <p className="text-zinc-400">{server.shortDescription}</p>
           <div className="flex flex-wrap gap-1.5">
-            {server.tags.map((tag) => (
-              <Link key={tag} href={`/?tag=${encodeURIComponent(tag)}`} className="tag hover:bg-zinc-700">
-                {tag}
-              </Link>
-            ))}
+            {server.tags.map((tag) => {
+              const known = knownTag(tag);
+              return known ? (
+                <Link key={tag} href={tagHref(known)} className="tag hover:bg-zinc-700">
+                  {tag}
+                </Link>
+              ) : (
+                <span key={tag} className="tag">
+                  {tag}
+                </span>
+              );
+            })}
           </div>
         </div>
         <div className="flex flex-col items-stretch gap-2 md:items-end">
@@ -104,7 +150,10 @@ export default async function ServerPage({ params, searchParams }: PageProps<"/s
         <img
           src={server.bannerUrl}
           alt={`${server.name} Banner`}
-          className="mx-auto w-full max-w-[468px] rounded-md"
+          width={468}
+          height={60}
+          className="mx-auto h-auto w-full max-w-[468px] rounded-md"
+          decoding="async"
         />
       )}
 

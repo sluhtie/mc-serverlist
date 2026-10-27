@@ -17,6 +17,9 @@ export async function SiteHeader() {
           <Link href="/" className="rounded-md px-3 py-2 text-zinc-300 hover:bg-zinc-800">
             Server
           </Link>
+          <Link href="/spielmodus" className="rounded-md px-3 py-2 text-zinc-300 hover:bg-zinc-800">
+            Spielmodi
+          </Link>
           <Link href="/submit" className="rounded-md px-3 py-2 text-zinc-300 hover:bg-zinc-800">
             Server eintragen
           </Link>

@@ -8,8 +8,9 @@ import { db, schema } from "@/lib/db";
 import { isFeatured, monthlyVotes } from "@/lib/servers";
 import { setFeatured, setPublished } from "@/server/actions/admin";
 import { deleteServer } from "@/server/actions/servers";
+import { NOINDEX } from "@/lib/seo";
 
-export const metadata = { title: "Admin · Server" };
+export const metadata = { title: "Admin · Server", robots: NOINDEX };
 
 export default async function AdminServersPage({ searchParams }: PageProps<"/admin/servers">) {
   await requireAdmin();

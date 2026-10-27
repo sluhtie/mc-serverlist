@@ -3,8 +3,9 @@ import { ServerForm } from "@/components/forms/server-form";
 import { requireUser } from "@/lib/auth/session";
 import { getServerBySlug } from "@/lib/servers";
 import { deleteServer } from "@/server/actions/servers";
+import { NOINDEX } from "@/lib/seo";
 
-export const metadata = { title: "Server bearbeiten" };
+export const metadata = { title: "Server bearbeiten", robots: NOINDEX };
 
 export default async function EditServerPage({ params }: PageProps<"/server/[slug]/edit">) {
   const { slug } = await params;

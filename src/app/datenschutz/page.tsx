@@ -1,4 +1,10 @@
-export const metadata = { title: "Datenschutz" };
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "Datenschutz",
+  description: "Datenschutzerklärung: welche Daten die Minecraft Serverliste verarbeitet und warum.",
+  path: "/datenschutz",
+});
 
 export default function DatenschutzPage() {
   return (

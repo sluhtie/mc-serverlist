@@ -5,9 +5,12 @@ import { GAMEMODE_ICONS, ICON_PALETTE, ICON_SIZE } from "@/lib/gamemode-icons";
 export function GamemodeIcon({
   tag,
   className = "",
+  size,
 }: {
   tag: (typeof TAGS)[number];
   className?: string;
+  /** Explicit pixel size, needed where CSS classes do not apply (OG images). */
+  size?: number;
 }) {
   const rects: React.ReactNode[] = [];
   GAMEMODE_ICONS[tag].forEach((row, y) => {
@@ -26,7 +29,7 @@ export function GamemodeIcon({
     }
   });
   return (
-    <svg viewBox={`0 0 ${ICON_SIZE} ${ICON_SIZE}`} shapeRendering="crispEdges" className={className} aria-hidden>
+    <svg viewBox={`0 0 ${ICON_SIZE} ${ICON_SIZE}`} width={size} height={size} shapeRendering="crispEdges" className={className} aria-hidden>
       {rects}
     </svg>
   );

@@ -1,8 +1,9 @@
 import { eq, gte, sql } from "drizzle-orm";
 import { requireAdmin } from "@/lib/auth/session";
 import { db, schema } from "@/lib/db";
+import { NOINDEX } from "@/lib/seo";
 
-export const metadata = { title: "Admin" };
+export const metadata = { title: "Admin", robots: NOINDEX };
 
 async function count(query: Promise<{ n: number }[]>) {
   const [row] = await query;
