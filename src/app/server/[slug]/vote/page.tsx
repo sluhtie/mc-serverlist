@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { VoteForm } from "@/components/forms/vote-form";
+import { formatAddress } from "@/components/server-card";
 import { ServerIcon } from "@/components/server-icon";
 import { VOTE_COOLDOWN_HOURS } from "@/lib/constants";
 import { env } from "@/lib/env";
+import { pageMetadata } from "@/lib/seo";
 import { getServerBySlug } from "@/lib/servers";
 
 export async function generateMetadata({
@@ -12,7 +14,15 @@ export async function generateMetadata({
 }: PageProps<"/server/[slug]/vote">): Promise<Metadata> {
   const { slug } = await params;
   const result = await getServerBySlug(slug);
-  return { title: result ? `Für ${result.server.name} voten` : "Voten" };
+  if (!result) return { title: "Voten" };
+  const { server } = result;
+  return pageMetadata({
+    title: `Für ${server.name} voten`,
+    description: `Stimme für ${server.name} (${formatAddress(server.host, server.port)}) ab und hilf dem Server im Minecraft Server Ranking nach oben.${server.votifierEnabled ? " Deine Belohnung kommt automatisch ingame an." : ""}`,
+    path: `/server/${server.slug}/vote`,
+    index: server.published,
+    image: `/server/${server.slug}/opengraph-image`,
+  });
 }
 
 export default async function VotePage({ params }: PageProps<"/server/[slug]/vote">) {

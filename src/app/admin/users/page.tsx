@@ -2,8 +2,9 @@ import { desc, ilike, or } from "drizzle-orm";
 import { requireAdmin } from "@/lib/auth/session";
 import { db, schema } from "@/lib/db";
 import { setBanned, setRole } from "@/server/actions/admin";
+import { NOINDEX } from "@/lib/seo";
 
-export const metadata = { title: "Admin · Benutzer" };
+export const metadata = { title: "Admin · Benutzer", robots: NOINDEX };
 
 export default async function AdminUsersPage({ searchParams }: PageProps<"/admin/users">) {
   const admin = await requireAdmin();

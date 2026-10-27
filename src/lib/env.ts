@@ -20,6 +20,10 @@ export const env = {
   get siteName() {
     return process.env.SITE_NAME ?? "MCServerlist";
   },
+  /** Content of the google-site-verification meta tag for Search Console. */
+  get googleSiteVerification() {
+    return process.env.GOOGLE_SITE_VERIFICATION || null;
+  },
   get appSecret() {
     const secret = process.env.APP_SECRET;
     if (!secret && process.env.NODE_ENV === "production") {

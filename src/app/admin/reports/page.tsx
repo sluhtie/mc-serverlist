@@ -4,8 +4,9 @@ import { requireAdmin } from "@/lib/auth/session";
 import { REPORT_REASONS } from "@/lib/constants";
 import { db, schema } from "@/lib/db";
 import { setReportStatus } from "@/server/actions/admin";
+import { NOINDEX } from "@/lib/seo";
 
-export const metadata = { title: "Admin · Meldungen" };
+export const metadata = { title: "Admin · Meldungen", robots: NOINDEX };
 
 export default async function AdminReportsPage({ searchParams }: PageProps<"/admin/reports">) {
   await requireAdmin();

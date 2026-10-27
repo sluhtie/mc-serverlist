@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/forms/auth-forms";
 import { getCurrentUser } from "@/lib/auth/session";
+import { NOINDEX } from "@/lib/seo";
 
-export const metadata = { title: "Anmelden" };
+export const metadata = { title: "Anmelden", robots: NOINDEX };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const { next } = await searchParams;

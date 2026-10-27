@@ -1,6 +1,12 @@
 import { env } from "@/lib/env";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "API" };
+export const metadata = pageMetadata({
+  title: "API für Minecraft Server Stats und Votes",
+  description:
+    "Öffentliche JSON-API: Server-Status, Spielerzahlen und Vote-Checks für Plugins, Discord-Bots und Websites abfragen.",
+  path: "/api-docs",
+});
 
 export default function ApiDocsPage() {
   const base = env.appUrl;

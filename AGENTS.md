@@ -54,6 +54,8 @@ src/
                        skin.ts + png.ts (player heads via the Mojang API), player.ts (name rules).
     servers.ts         Read queries for server listings and stats.
     env.ts             All runtime configuration. Never read process.env elsewhere.
+    seo.ts             pageMetadata() (title, canonical, OpenGraph, robots) and JSON-LD helpers.
+    tags.ts            Game mode slugs and texts for the /spielmodus landing pages.
     security.ts        Client IP, IP hashing, rate limiting, Turnstile.
   server/
     actions/           Server Actions ("use server"), one file per domain.
@@ -74,6 +76,9 @@ public/brand/          Source SVGs of the logo and app icon. The PNG/ICO icons i
 - Mutations go through **Server Actions** in `src/server/actions/`. Every action must
   authenticate/authorize itself (`requireUser`, `requireAdmin`, ownership checks) and validate
   input with Zod. Never trust hidden form fields for authorization.
+- Every public page exports metadata built with `pageMetadata()` from `lib/seo.ts` (canonical
+  path, description, OpenGraph/Twitter). Private pages (forms, account, admin) use `robots: NOINDEX`.
+  Filter/sort variants of lists are `noindex, follow`; new indexable pages go into `sitemap.ts`.
 - Keep Client Components small and only where interactivity is needed (`"use client"`).
 - Use `next/link` for internal links. External user-supplied images use `<img>` with an
   eslint-disable comment (see `server-card.tsx`), because hosts are arbitrary.
@@ -91,7 +96,8 @@ public/brand/          Source SVGs of the logo and app icon. The PNG/ICO icons i
   (`lib/minecraft/address.ts`) to block SSRF into private networks.
 - Store IP addresses only as `hashIp()` hashes. Do not log secrets, tokens or full IPs.
 - Escape user input for `LIKE` queries; rate-limit endpoints that can be abused.
-- Render user content as text. Do not introduce `dangerouslySetInnerHTML`.
+- Render user content as text. Do not introduce `dangerouslySetInnerHTML`; structured data goes
+  through `components/json-ld.tsx`, which escapes the payload.
 
 ### Code style
 - TypeScript strict, no `any`. Prefer small, typed functions over classes.

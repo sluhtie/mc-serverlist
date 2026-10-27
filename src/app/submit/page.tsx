@@ -1,7 +1,9 @@
 import { ServerForm } from "@/components/forms/server-form";
 import { requireUser } from "@/lib/auth/session";
+import { NOINDEX } from "@/lib/seo";
 
-export const metadata = { title: "Server eintragen" };
+// Visitors without an account are redirected to the login, so there is nothing to index.
+export const metadata = { title: "Server eintragen", robots: NOINDEX };
 
 export default async function SubmitPage() {
   await requireUser("/submit");

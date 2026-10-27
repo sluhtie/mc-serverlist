@@ -70,6 +70,7 @@ See [`.env.example`](.env.example) for the full list.
 | `APP_SECRET` | yes (prod) | Random secret used to hash IPs (`openssl rand -base64 48`) |
 | `ADMIN_EMAILS` | no | Comma-separated e-mails that become admins |
 | `SITE_NAME` | no | Display name, default `MCServerlist` |
+| `GOOGLE_SITE_VERIFICATION` | no | Google Search Console verification code (meta tag method) |
 | `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | no | Enables the captcha on the vote page |
 | `STATUS_WORKER_ENABLED` | no | Run the ping worker in this instance (default `true`) |
 | `STATUS_INTERVAL_SECONDS` | no | Ping interval, minimum 60 (default `300`) |

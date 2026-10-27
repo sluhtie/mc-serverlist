@@ -1,14 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { GamemodeIcon } from "@/components/gamemode-icon";
+import { permanentRedirect } from "next/navigation";
+import { GamemodeGrid } from "@/components/gamemode-grid";
 import { HeroArt } from "@/components/brand/hero-art";
+import { JsonLd } from "@/components/json-ld";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { Pagination } from "@/components/pagination";
 import { ServerCard } from "@/components/server-card";
 import { ServerTile } from "@/components/server-tile";
 import { Select } from "@/components/ui/select";
-import { bannerTheme } from "@/lib/banner";
 import { COUNTRIES, PAGE_SIZE, TAGS } from "@/lib/constants";
 import { env } from "@/lib/env";
+import { absoluteUrl, pageMetadata, SITE_DESCRIPTION } from "@/lib/seo";
 import {
   getSiteStats,
   getTagCounts,
@@ -17,6 +20,7 @@ import {
   listServers,
   type ServerSort,
 } from "@/lib/servers";
+import { knownTag, tagHref } from "@/lib/tags";
 
 const SORTS: Record<ServerSort, string> = {
   votes: "Meiste Votes",
@@ -28,6 +32,51 @@ const numberFormat = new Intl.NumberFormat("de-DE");
 
 function first(value: string | string[] | undefined) {
   return (Array.isArray(value) ? value[0] : value)?.trim() || undefined;
+}
+
+type SearchParams = Awaited<PageProps<"/">["searchParams"]>;
+
+function parseParams(sp: SearchParams) {
+  const q = first(sp.q)?.slice(0, 64);
+  const tag = knownTag(first(sp.tag));
+  const version = first(sp.version)?.slice(0, 32);
+  const countryParam = first(sp.country);
+  const country = countryParam && countryParam in COUNTRIES ? countryParam : undefined;
+  const online = first(sp.online) === "1";
+  const sortParam = first(sp.sort);
+  const sort: ServerSort = sortParam && sortParam in SORTS ? (sortParam as ServerSort) : "votes";
+  const page = Math.max(1, Math.floor(Number(first(sp.page))) || 1);
+  return { q, tag, version, country, online, sort, page };
+}
+
+export async function generateMetadata({ searchParams }: PageProps<"/">): Promise<Metadata> {
+  const { q, tag, version, country, online, sort, page } = parseParams(await searchParams);
+  if (q || tag || version || country || online || sort !== "votes") {
+    // Search and filter combinations are endless near-duplicates of the main list and the
+    // game mode pages, so keep them out of the index but let crawlers follow the links.
+    return pageMetadata({
+      title: q ? `Suche: ${q}` : tag ? `${tag} Server` : "Minecraft Server filtern",
+      description: SITE_DESCRIPTION,
+      index: false,
+      ownImage: true,
+    });
+  }
+  if (page > 1) {
+    // Paginated pages canonicalize to themselves so the servers on them stay discoverable.
+    return pageMetadata({
+      title: `Minecraft Server Ranking – Seite ${page}`,
+      description: `Seite ${page} der Minecraft Serverliste: Server mit Live-Status, Spielerzahlen und Votes im aktuellen Monat.`,
+      path: `/?page=${page}`,
+      ownImage: true,
+    });
+  }
+  return pageMetadata({
+    title: `Minecraft Serverliste – Die besten Minecraft Server | ${env.siteName}`,
+    absoluteTitle: true,
+    description: SITE_DESCRIPTION,
+    path: "/",
+    ownImage: true,
+  });
 }
 
 function SectionHeading({
@@ -103,39 +152,23 @@ async function Hero() {
 async function Gamemodes() {
   // Only known tags have an icon and a filter, so drop anything else that is stored.
   const counts = (await getTagCounts()).flatMap(({ tag, count }) => {
-    const known = TAGS.find((t) => t === tag);
+    const known = knownTag(tag);
     return known ? [{ tag: known, count }] : [];
   });
   // Fall back to the predefined tags so the section is useful on a fresh install.
   const tags = counts.length > 0 ? counts : TAGS.slice(0, 12).map((tag) => ({ tag, count: 0 }));
   return (
     <section className="space-y-4">
-      <SectionHeading title="Beliebte Spielmodi" subtitle="Finde Server, die zu deinem Spielstil passen." />
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {tags.map(({ tag, count }) => {
-          const { hue } = bannerTheme(tag);
-          return (
-            <Link
-              key={tag}
-              href={`/?tag=${encodeURIComponent(tag)}`}
-              className="card group flex items-center gap-3 p-3 transition hover:border-zinc-600"
-            >
-              <span
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-lg ring-1 ring-white/10 transition group-hover:scale-105"
-                style={{ background: `linear-gradient(135deg, hsl(${hue} 35% 22%), hsl(${hue} 40% 11%))` }}
-              >
-                <GamemodeIcon tag={tag} className="h-7 w-7 drop-shadow" />
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold group-hover:text-brand-400">{tag}</span>
-                <span className="text-xs text-zinc-500">
-                  {count === 1 ? "1 Server" : `${numberFormat.format(count)} Server`}
-                </span>
-              </span>
-            </Link>
-          );
-        })}
-      </div>
+      <SectionHeading
+        title="Beliebte Spielmodi"
+        subtitle="Finde Server, die zu deinem Spielstil passen."
+        action={
+          <Link href="/spielmodus" className="text-sm text-brand-400 hover:underline">
+            Alle Spielmodi →
+          </Link>
+        }
+      />
+      <GamemodeGrid items={tags} />
     </section>
   );
 }
@@ -204,15 +237,16 @@ function InfoSection() {
 }
 
 export default async function HomePage({ searchParams }: PageProps<"/">) {
-  const sp = await searchParams;
-  const q = first(sp.q)?.slice(0, 64);
-  const tag = TAGS.find((t) => t === first(sp.tag));
-  const version = first(sp.version)?.slice(0, 32);
-  const country = first(sp.country);
-  const online = first(sp.online) === "1";
-  const sortParam = first(sp.sort);
-  const sort: ServerSort = sortParam && sortParam in SORTS ? (sortParam as ServerSort) : "votes";
-  const page = Math.max(1, Number(first(sp.page)) || 1);
+  const { q, tag, version, country, online, sort, page } = parseParams(await searchParams);
+
+  // A plain game mode filter has a dedicated, indexable landing page.
+  if (tag && !q && !version && !country && !online) {
+    const sp = new URLSearchParams();
+    if (sort !== "votes") sp.set("sort", sort);
+    if (page > 1) sp.set("page", String(page));
+    const qs = sp.toString();
+    permanentRedirect(qs ? `${tagHref(tag)}?${qs}` : tagHref(tag));
+  }
 
   const filtered = Boolean(q || tag || version || country || online);
   const landing = page === 1 && !filtered;
@@ -221,7 +255,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
       q,
       tag,
       version,
-      country: country && country in COUNTRIES ? country : undefined,
+      country,
       onlineOnly: online,
       sort,
       page,
@@ -233,6 +267,47 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
 
   return (
     <div className="space-y-12">
+      {landing && (
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "WebSite",
+                "@id": `${absoluteUrl("/")}#website`,
+                name: env.siteName,
+                url: absoluteUrl("/"),
+                description: SITE_DESCRIPTION,
+                inLanguage: "de-DE",
+                publisher: { "@id": `${absoluteUrl("/")}#organization` },
+                potentialAction: {
+                  "@type": "SearchAction",
+                  target: { "@type": "EntryPoint", urlTemplate: `${absoluteUrl("/")}?q={search_term_string}` },
+                  "query-input": "required name=search_term_string",
+                },
+              },
+              {
+                "@type": "Organization",
+                "@id": `${absoluteUrl("/")}#organization`,
+                name: env.siteName,
+                url: absoluteUrl("/"),
+                logo: absoluteUrl("/icons/icon-512.png"),
+              },
+              {
+                "@type": "ItemList",
+                name: "Minecraft Server Ranking",
+                itemListOrder: "https://schema.org/ItemListOrderDescending",
+                itemListElement: result.items.map((s, i) => ({
+                  "@type": "ListItem",
+                  position: i + 1,
+                  url: absoluteUrl(`/server/${s.slug}`),
+                  name: s.name,
+                })),
+              },
+            ],
+          }}
+        />
+      )}
       {landing ? (
         <Hero />
       ) : (

@@ -7,8 +7,9 @@ import { StatusBadge } from "@/components/status-badge";
 import { requireUser } from "@/lib/auth/session";
 import { db, schema } from "@/lib/db";
 import { monthlyVotes } from "@/lib/servers";
+import { NOINDEX } from "@/lib/seo";
 
-export const metadata = { title: "Mein Account" };
+export const metadata = { title: "Mein Account", robots: NOINDEX };
 
 export default async function AccountPage() {
   const user = await requireUser("/account");
