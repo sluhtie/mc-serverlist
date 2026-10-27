@@ -1,11 +1,11 @@
 import "server-only";
-import crypto from "node:crypto";
 import { and, eq, gt, lt } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { cache } from "react";
 import { db, schema } from "@/lib/db";
 import { env } from "@/lib/env";
 import { localRedirect } from "@/lib/i18n/server";
+import { hashToken, randomToken } from "./crypto";
 
 const COOKIE_NAME = "mcsl_session";
 const SESSION_DAYS = 30;
@@ -15,14 +15,12 @@ export type SessionUser = {
   email: string;
   username: string;
   role: "user" | "admin";
+  emailVerified: boolean;
+  twoFactorEnabled: boolean;
 };
 
-function hashToken(token: string) {
-  return crypto.createHash("sha256").update(token).digest("hex");
-}
-
 export async function createSession(userId: string) {
-  const token = crypto.randomBytes(32).toString("base64url");
+  const token = randomToken();
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
   await db.insert(schema.sessions).values({ id: hashToken(token), userId, expiresAt });
   // Opportunistic cleanup so the table does not grow forever.
@@ -58,6 +56,8 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
       username: schema.users.username,
       role: schema.users.role,
       banned: schema.users.banned,
+      emailVerifiedAt: schema.users.emailVerifiedAt,
+      totpEnabledAt: schema.users.totpEnabledAt,
     })
     .from(schema.sessions)
     .innerJoin(schema.users, eq(schema.users.id, schema.sessions.userId))
@@ -67,7 +67,14 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
     .limit(1);
   const row = rows[0];
   if (!row || row.banned) return null;
-  return { id: row.id, email: row.email, username: row.username, role: row.role };
+  return {
+    id: row.id,
+    email: row.email,
+    username: row.username,
+    role: row.role,
+    emailVerified: row.emailVerifiedAt !== null,
+    twoFactorEnabled: row.totpEnabledAt !== null,
+  };
 });
 
 export async function requireUser(next = "/") {

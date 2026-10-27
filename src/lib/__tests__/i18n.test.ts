@@ -105,6 +105,7 @@ describe("dictionaries", () => {
       "admin.ok",
       "admin.roleAdmin",
       "admin.roleUser",
+      "auth.code",
       "og.status",
     ]);
     expect(identical.map(([key]) => key).filter((key) => !same.has(key))).toEqual([]);

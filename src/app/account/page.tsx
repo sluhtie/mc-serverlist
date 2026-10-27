@@ -1,7 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
-import { ChangePasswordForm } from "@/components/forms/auth-forms";
-import { PlusIcon, ShieldIcon, VoteIcon } from "@/components/icons";
+import { VerifyEmailNotice } from "@/components/verify-email-notice";
+import { PlusIcon, SettingsIcon, VoteIcon } from "@/components/icons";
 import Link from "@/components/link";
 import { PlayerHead } from "@/components/player-head";
 import { formatAddress } from "@/components/server-card";
@@ -39,7 +39,7 @@ export default async function AccountPage() {
 
   return (
     <div className="space-y-10">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <div className="rounded-2xl bg-surface p-1.5 shadow-md ring-1 ring-line">
           <PlayerHead name={user.username} size={56} className="rounded-xl" />
         </div>
@@ -47,7 +47,12 @@ export default async function AccountPage() {
           <h1 className="font-display text-3xl font-extrabold tracking-tight">{t.account.hello(user.username)}</h1>
           <p className="text-muted">{user.email}</p>
         </div>
+        <Link href="/settings" className="btn-secondary sm:ml-auto">
+          <SettingsIcon /> {t.account.settings}
+        </Link>
       </div>
+
+      {!user.emailVerified && <VerifyEmailNotice email={user.email} />}
 
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-3">
@@ -83,12 +88,6 @@ export default async function AccountPage() {
         )}
       </section>
 
-      <section className="card max-w-md space-y-5 p-6">
-        <h2 className="flex items-center gap-2 font-display text-xl font-bold">
-          <ShieldIcon className="h-5 w-5 text-accent" /> {t.account.security}
-        </h2>
-        <ChangePasswordForm />
-      </section>
     </div>
   );
 }

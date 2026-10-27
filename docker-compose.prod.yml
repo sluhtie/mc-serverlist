@@ -2,7 +2,8 @@
 #
 # Dokploy setup:
 #   1. Create a Compose service, source = this repo, compose path = ./docker-compose.prod.yml
-#   2. Environment tab: set at least APP_URL, APP_SECRET, POSTGRES_PASSWORD, ADMIN_EMAILS.
+#   2. Environment tab: set at least APP_URL, APP_SECRET, POSTGRES_PASSWORD, ADMIN_EMAILS
+#      and the SMTP_* variables (without mail nobody can confirm their address).
 #      Dokploy writes them to a .env file next to this compose file; they are interpolated below.
 #   3. Domains tab: add your domain -> service "app", container port 3000, HTTPS on.
 #      Dokploy injects the Traefik labels and network itself, so none are defined here.
@@ -31,6 +32,12 @@ services:
       ADMIN_EMAILS: ${ADMIN_EMAILS:-}
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
       STATUS_WORKER_ENABLED: ${STATUS_WORKER_ENABLED:-true}
       STATUS_INTERVAL_SECONDS: ${STATUS_INTERVAL_SECONDS:-300}
       TZ: ${TZ:-Europe/Berlin}

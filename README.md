@@ -43,6 +43,9 @@ Open <http://localhost:3000> and register with `admin@example.com` to get admin 
 (change it with `ADMIN_EMAILS=you@example.com docker compose up`). The source is mounted into the
 container, so changes reload instantly. Postgres is reachable on `localhost:5432` (user `mcsl`, any password).
 
+Every e-mail the app sends (address confirmation, password reset, …) lands in
+[Mailpit](https://mailpit.axllent.org) at <http://localhost:8025> instead of a real inbox.
+
 Local development uses `ALLOW_PRIVATE_ADDRESSES=true`, so you can list a Minecraft server
 running on your own machine or LAN.
 
@@ -67,7 +70,7 @@ See [`.env.example`](.env.example) for the full list.
 | --- | --- | --- |
 | `DATABASE_URL` | yes* | PostgreSQL connection string. *Alternatively set `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` (used by the production compose file) |
 | `APP_URL` | yes (prod) | Public URL, e.g. `https://servers.example.com` |
-| `APP_SECRET` | yes (prod) | Random secret used to hash IPs (`openssl rand -base64 48`) |
+| `APP_SECRET` | yes (prod) | Random secret used to hash IPs and encrypt 2FA secrets (`openssl rand -base64 48`). Changing it disables every user's authenticator. |
 | `ADMIN_EMAILS` | no | Comma-separated e-mails that become admins |
 | `SITE_NAME` | no | Display name, default `MCServerlist` |
 | `GOOGLE_SITE_VERIFICATION` | no | Google Search Console verification code (meta tag method) |
@@ -75,6 +78,11 @@ See [`.env.example`](.env.example) for the full list.
 | `STATUS_WORKER_ENABLED` | no | Run the ping worker in this instance (default `true`) |
 | `STATUS_INTERVAL_SECONDS` | no | Ping interval, minimum 60 (default `300`) |
 | `ALLOW_PRIVATE_ADDRESSES` | no | Allow private IPs as server addresses. Dev only. |
+| `SMTP_HOST` | yes (prod) | SMTP server for account e-mails. Without it no mail is sent, so nobody can confirm their address |
+| `SMTP_PORT` | no | Default `587` (STARTTLS); use `465` for implicit TLS |
+| `SMTP_SECURE` | no | Force implicit TLS on/off (default: on for port 465) |
+| `SMTP_USER` / `SMTP_PASSWORD` | no | SMTP login |
+| `MAIL_FROM` | no | Sender, default `<SITE_NAME> <noreply@<APP_URL domain>>` |
 
 ## Deployment
 

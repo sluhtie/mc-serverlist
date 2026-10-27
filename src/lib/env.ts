@@ -49,6 +49,27 @@ export const env = {
   get statusIntervalSeconds() {
     return Math.max(60, Number(process.env.STATUS_INTERVAL_SECONDS ?? 300) || 300);
   },
+  /** SMTP server for outgoing mail. Without it, mails are not sent (a warning is logged). */
+  get smtpHost() {
+    return process.env.SMTP_HOST || null;
+  },
+  get smtpPort() {
+    return Number(process.env.SMTP_PORT ?? 587) || 587;
+  },
+  /** Implicit TLS (port 465). Port 587 upgrades with STARTTLS instead. */
+  get smtpSecure() {
+    return bool(process.env.SMTP_SECURE, this.smtpPort === 465);
+  },
+  get smtpUser() {
+    return process.env.SMTP_USER || null;
+  },
+  get smtpPassword() {
+    return process.env.SMTP_PASSWORD || null;
+  },
+  get mailFrom() {
+    const host = new URL(this.appUrl).hostname.replace(/^www\./, "");
+    return process.env.MAIL_FROM || `${this.siteName} <noreply@${host}>`;
+  },
   get secureCookies() {
     return bool(process.env.SECURE_COOKIES, this.appUrl.startsWith("https://"));
   },

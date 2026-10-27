@@ -155,3 +155,29 @@ export const ExternalIcon = (p: IconProps) => (
     <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
   </Icon>
 );
+export const MailIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="m3 7 9 6 9-6" />
+  </Icon>
+);
+export const KeyIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="8" cy="15" r="4" />
+    <path d="m10.8 12.2 9.2-9.2M17 6l3 3M14 9l2 2" />
+  </Icon>
+);
+export const SettingsIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12" />
+    <circle cx="16" cy="6" r="2" />
+    <circle cx="10" cy="12" r="2" />
+    <circle cx="18" cy="18" r="2" />
+  </Icon>
+);
+export const SmartphoneIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="6" y="2" width="12" height="20" rx="2.5" />
+    <path d="M11 18h2" />
+  </Icon>
+);

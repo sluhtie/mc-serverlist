@@ -1,7 +1,7 @@
 import { desc, ilike, or } from "drizzle-orm";
 import { requireAdmin } from "@/lib/auth/session";
 import { db, schema } from "@/lib/db";
-import { setBanned, setRole } from "@/server/actions/admin";
+import { markEmailVerified, resetTwoFactor, setBanned, setRole } from "@/server/actions/admin";
 import type { Metadata } from "next";
 import { INTL_LOCALE } from "@/lib/i18n/config";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
@@ -24,6 +24,8 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
       username: users.username,
       role: users.role,
       banned: users.banned,
+      emailVerifiedAt: users.emailVerifiedAt,
+      totpEnabledAt: users.totpEnabledAt,
       createdAt: users.createdAt,
     })
     .from(users)
@@ -60,9 +62,25 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
                 <td className="p-3">
                   {u.role === "admin" ? <span className="tag border-amber-500/30 bg-amber-500/10 text-warn">{t.admin.roleAdmin}</span> : t.admin.roleUser}
                   {u.banned && <span className="tag ml-1 border-red-500/30 bg-red-500/10 text-danger">{t.admin.banned}</span>}
+                  {!u.emailVerifiedAt && (
+                    <span className="tag ml-1 border-amber-500/30 bg-amber-500/10 text-warn">{t.admin.unverified}</span>
+                  )}
+                  {u.totpEnabledAt && <span className="tag ml-1">2FA</span>}
                 </td>
                 <td className="p-3">{u.createdAt.toLocaleDateString(INTL_LOCALE[locale])}</td>
                 <td className="flex flex-wrap gap-1 p-3">
+                  {!u.emailVerifiedAt && (
+                    <form action={markEmailVerified}>
+                      <input type="hidden" name="id" value={u.id} />
+                      <button className="btn-secondary px-2 py-1">{t.admin.markVerified}</button>
+                    </form>
+                  )}
+                  {u.totpEnabledAt && u.id !== admin.id && (
+                    <form action={resetTwoFactor}>
+                      <input type="hidden" name="id" value={u.id} />
+                      <button className="btn-secondary px-2 py-1">{t.admin.resetTwoFactor}</button>
+                    </form>
+                  )}
                   {u.id !== admin.id && (
                     <>
                       <form action={setRole}>
