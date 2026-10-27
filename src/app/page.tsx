@@ -102,12 +102,12 @@ async function Hero() {
   ];
   return (
     <section className="relative isolate -mt-2 overflow-hidden rounded-[2rem] border border-line bg-gradient-to-b from-sky-200 via-sky-100 to-page shadow-[var(--shadow-card)] dark:from-[#0b1f14] dark:via-[#0a120e] dark:to-page">
-      <HeroArt variant="day" animated className="absolute inset-x-0 bottom-0 -z-10 h-56 w-full sm:h-72 dark:hidden" />
-      <HeroArt animated className="absolute inset-x-0 bottom-0 -z-10 hidden h-56 w-full sm:h-72 dark:block" />
+      <HeroArt variant="day" animated className="absolute inset-x-0 bottom-0 -z-10 h-24 w-full sm:h-28 dark:hidden" />
+      <HeroArt animated className="absolute inset-x-0 bottom-0 -z-10 hidden h-24 w-full sm:h-28 dark:block" />
       <div className="pointer-events-none absolute -top-32 -left-24 -z-10 h-96 w-96 animate-glow rounded-full bg-brand-500/20 blur-3xl" />
-      <div className="grid grid-cols-1 items-center gap-10 px-5 pt-10 pb-44 sm:px-12 sm:pt-16 sm:pb-56 lg:grid-cols-[1fr_auto]">
+      <div className="grid grid-cols-1 items-center gap-6 px-5 pt-6 pb-20 sm:px-10 sm:pt-8 sm:pb-20 lg:grid-cols-[1fr_17rem] lg:gap-10">
         <div className="min-w-0 max-w-2xl">
-          <p className="tag mb-5 animate-rise gap-2 border-brand-500/30 bg-surface/70 px-3 py-1 text-ok backdrop-blur">
+          <p className="tag mb-3 animate-rise gap-2 border-brand-500/30 bg-surface/70 px-3 py-1 text-ok backdrop-blur">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-400 opacity-70" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-500" />
@@ -115,7 +115,7 @@ async function Hero() {
             {t.home.onlineNow(numberFormat.format(stats.online))}
           </p>
           <h1
-            className="animate-rise font-display text-[2.6rem] leading-[0.95] font-extrabold tracking-tight text-balance sm:text-7xl"
+            className="animate-rise font-display text-[2.1rem] leading-[1.02] font-extrabold tracking-tight text-balance sm:text-5xl"
             style={{ animationDelay: "60ms" }}
           >
             {t.home.heroTitle}{" "}
@@ -123,13 +123,13 @@ async function Hero() {
               {t.home.heroHighlight}
             </span>
           </h1>
-          <p className="mt-5 max-w-xl animate-rise text-lg text-fg-soft" style={{ animationDelay: "120ms" }}>
+          <p className="mt-3 max-w-xl animate-rise text-fg-soft sm:text-lg" style={{ animationDelay: "120ms" }}>
             {t.home.heroText(env.siteName)}
           </p>
           <form
             action={localizePath("/", locale)}
             role="search"
-            className="mt-7 flex max-w-xl animate-rise items-center gap-2 rounded-2xl border border-line bg-surface/85 p-1.5 shadow-lg backdrop-blur focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/15"
+            className="mt-5 flex max-w-xl animate-rise items-center gap-2 rounded-2xl border border-line bg-surface/85 p-1.5 shadow-lg backdrop-blur focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/15"
             style={{ animationDelay: "180ms" }}
           >
             <SearchIcon className="ml-2.5 h-5 w-5 shrink-0 text-subtle" />
@@ -141,22 +141,18 @@ async function Hero() {
             />
             <button className="btn-primary px-4 py-2.5 sm:px-5">{t.home.search}</button>
           </form>
-          <dl className="mt-8 grid max-w-xl animate-rise grid-cols-3 gap-2 sm:gap-3" style={{ animationDelay: "240ms" }}>
-            {items.map((item) => (
-              <div key={item.label} className="min-w-0 rounded-2xl border border-line bg-surface/70 p-3 backdrop-blur sm:p-4">
-                <dt className="flex items-start gap-1.5 text-[11px] leading-tight font-medium tracking-wide text-muted uppercase sm:text-xs">
-                  <item.icon className="h-3.5 w-3.5 shrink-0 text-accent" />
-                  <span>{item.label}</span>
-                </dt>
-                <dd className="mt-1 font-pixel text-2xl text-fg sm:text-3xl">{numberFormat.format(item.value)}</dd>
-              </div>
-            ))}
-          </dl>
         </div>
-        <div className="relative mx-auto hidden lg:block" aria-hidden>
-          <div className="absolute inset-6 animate-glow rounded-full bg-brand-500/30 blur-3xl" />
-          <LogoMark className="relative h-64 w-64 animate-float drop-shadow-[0_30px_40px_rgba(22,101,52,0.35)]" />
-        </div>
+        <dl className="grid animate-rise grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-1" style={{ animationDelay: "240ms" }}>
+          {items.map((item) => (
+            <div key={item.label} className="min-w-0 rounded-2xl border border-line bg-surface/70 p-3 backdrop-blur sm:px-4 lg:flex lg:items-center lg:justify-between lg:gap-3 lg:py-2.5">
+              <dt className="flex items-start gap-1.5 text-[11px] leading-tight font-medium tracking-wide text-muted uppercase sm:text-xs">
+                <item.icon className="h-3.5 w-3.5 shrink-0 text-accent" />
+                <span>{item.label}</span>
+              </dt>
+              <dd className="mt-1 font-pixel text-2xl text-fg lg:mt-0">{numberFormat.format(item.value)}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
     </section>
   );
