@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { GamemodeIcon } from "@/components/gamemode-icon";
 import { HeroArt } from "@/components/brand/hero-art";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { Pagination } from "@/components/pagination";
 import { ServerCard } from "@/components/server-card";
 import { ServerTile } from "@/components/server-tile";
+import { Select } from "@/components/ui/select";
 import { bannerTheme } from "@/lib/banner";
 import { COUNTRIES, PAGE_SIZE, TAGS } from "@/lib/constants";
 import { env } from "@/lib/env";
@@ -99,7 +101,11 @@ async function Hero() {
 }
 
 async function Gamemodes() {
-  const counts = await getTagCounts();
+  // Only known tags have an icon and a filter, so drop anything else that is stored.
+  const counts = (await getTagCounts()).flatMap(({ tag, count }) => {
+    const known = TAGS.find((t) => t === tag);
+    return known ? [{ tag: known, count }] : [];
+  });
   // Fall back to the predefined tags so the section is useful on a fresh install.
   const tags = counts.length > 0 ? counts : TAGS.slice(0, 12).map((tag) => ({ tag, count: 0 }));
   return (
@@ -115,10 +121,10 @@ async function Gamemodes() {
               className="card group flex items-center gap-3 p-3 transition hover:border-zinc-600"
             >
               <span
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-sm font-bold text-white shadow-inner"
-                style={{ background: `linear-gradient(135deg, hsl(${hue} 55% 42%), hsl(${hue} 50% 24%))` }}
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-lg ring-1 ring-white/10 transition group-hover:scale-105"
+                style={{ background: `linear-gradient(135deg, hsl(${hue} 35% 22%), hsl(${hue} 40% 11%))` }}
               >
-                {tag.slice(0, 1)}
+                <GamemodeIcon tag={tag} className="h-7 w-7 drop-shadow" />
               </span>
               <span className="min-w-0">
                 <span className="block truncate text-sm font-semibold group-hover:text-brand-400">{tag}</span>
@@ -295,14 +301,12 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
             className="input lg:col-span-2"
             aria-label="Suche"
           />
-          <select name="tag" defaultValue={tag ?? ""} className="input" aria-label="Spielmodus">
-            <option value="">Alle Spielmodi</option>
-            {TAGS.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+          <Select
+            name="tag"
+            defaultValue={tag ?? ""}
+            aria-label="Spielmodus"
+            options={[{ value: "", label: "Alle Spielmodi" }, ...TAGS.map((t) => ({ value: t, label: t }))]}
+          />
           <input
             name="version"
             defaultValue={version}
@@ -310,23 +314,23 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
             className="input"
             aria-label="Version"
           />
-          <select name="country" defaultValue={country ?? ""} className="input" aria-label="Land">
-            <option value="">Alle Länder</option>
-            {Object.entries(COUNTRIES).map(([code, label]) => (
-              <option key={code} value={code}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <select name="sort" defaultValue={sort} className="input" aria-label="Sortierung">
-            {Object.entries(SORTS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <label className="flex items-center gap-2 text-sm text-zinc-300 lg:col-span-2">
-            <input type="checkbox" name="online" value="1" defaultChecked={online} />
+          <Select
+            name="country"
+            defaultValue={country ?? ""}
+            aria-label="Land"
+            options={[
+              { value: "", label: "Alle Länder" },
+              ...Object.entries(COUNTRIES).map(([value, label]) => ({ value, label })),
+            ]}
+          />
+          <Select
+            name="sort"
+            defaultValue={sort}
+            aria-label="Sortierung"
+            options={Object.entries(SORTS).map(([value, label]) => ({ value, label }))}
+          />
+          <label className="flex w-fit cursor-pointer items-center gap-2 text-sm text-zinc-300 lg:col-span-2">
+            <input type="checkbox" name="online" value="1" defaultChecked={online} className="checkbox" />
             Nur Online-Server
           </label>
           <div className="flex gap-2 sm:col-span-2 lg:col-span-4 lg:justify-end">

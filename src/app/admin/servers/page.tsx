@@ -2,6 +2,7 @@ import { desc, eq, ilike, or } from "drizzle-orm";
 import Link from "next/link";
 import { formatAddress } from "@/components/server-card";
 import { StatusBadge } from "@/components/status-badge";
+import { Select } from "@/components/ui/select";
 import { requireAdmin } from "@/lib/auth/session";
 import { db, schema } from "@/lib/db";
 import { isFeatured, monthlyVotes } from "@/lib/servers";
@@ -71,13 +72,22 @@ export default async function AdminServersPage({ searchParams }: PageProps<"/adm
                 <td className="p-2">
                   <form action={setFeatured} className="flex items-center gap-1">
                     <input type="hidden" name="id" value={s.id} />
-                    <select name="days" defaultValue="" className="input w-28 py-1">
-                      <option value="">{s.featured ? `bis ${s.featuredUntil?.toLocaleDateString("de-DE")}` : "Nein"}</option>
-                      <option value="7">7 Tage</option>
-                      <option value="30">30 Tage</option>
-                      <option value="90">90 Tage</option>
-                      <option value="0">Entfernen</option>
-                    </select>
+                    <Select
+                      name="days"
+                      size="sm"
+                      className="w-32"
+                      aria-label={`Featured für ${s.name}`}
+                      options={[
+                        {
+                          value: "",
+                          label: s.featured ? `bis ${s.featuredUntil?.toLocaleDateString("de-DE")}` : "Nein",
+                        },
+                        { value: "7", label: "7 Tage" },
+                        { value: "30", label: "30 Tage" },
+                        { value: "90", label: "90 Tage" },
+                        { value: "0", label: "Entfernen" },
+                      ]}
+                    />
                     <button className="btn-secondary px-2 py-1">OK</button>
                   </form>
                 </td>
