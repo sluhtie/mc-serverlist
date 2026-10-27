@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { createPortal } from "react-dom";
 import { useT } from "@/lib/i18n/client";
 
 export type SelectOption = { value: string; label: string };
@@ -51,7 +52,8 @@ export function Select({
   }
   const value = controlledValue ?? uncontrolledValue;
   const [open, setOpen] = useState(false);
-  const [dropUp, setDropUp] = useState(false);
+  // The list is portaled to <body> with fixed coordinates, so tables with overflow do not clip it.
+  const [position, setPosition] = useState<CSSProperties>({});
   const [active, setActive] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -71,20 +73,38 @@ export function Select({
     const rect = rootRef.current?.getBoundingClientRect();
     if (rect) {
       const below = window.innerHeight - rect.bottom;
-      setDropUp(below < 280 && rect.top > below);
+      const dropUp = below < 280 && rect.top > below;
+      setPosition({
+        left: rect.left,
+        minWidth: rect.width,
+        ...(dropUp ? { bottom: window.innerHeight - rect.top + 4 } : { top: rect.bottom + 4 }),
+      });
     }
     setActive(Math.max(0, Math.min(options.length - 1, index)));
     setOpen(true);
   }
 
-  // Close when clicking anywhere outside the component.
+  // Close when clicking outside, and when the page scrolls or resizes, since the list's
+  // fixed position would no longer line up with the button.
   useEffect(() => {
     if (!open) return;
+    const inside = (target: EventTarget | null) =>
+      target instanceof Node && (rootRef.current?.contains(target) || listRef.current?.contains(target));
     const onPointerDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!inside(e.target)) setOpen(false);
     };
+    const onScroll = (e: Event) => {
+      if (!inside(e.target)) setOpen(false);
+    };
+    const close = () => setOpen(false);
     document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
+    document.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", close);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", close);
+    };
   }, [open]);
 
   // Keep the highlighted option visible while navigating with the keyboard.
@@ -194,50 +214,66 @@ export function Select({
           aria-hidden
           className={`h-4 w-4 shrink-0 text-subtle transition-transform ${open ? "rotate-180" : ""}`}
         >
-          <path d="m5 7.5 5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="m5 7.5 5 5 5-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </button>
-      <ul
-        ref={listRef}
-        id={listId}
-        role="listbox"
-        aria-labelledby={ariaLabel ? undefined : buttonId}
-        aria-label={ariaLabel}
-        tabIndex={-1}
-        hidden={!open}
-        // Keep focus on the button so its blur handler does not close the list mid-click.
-        onMouseDown={(e) => e.preventDefault()}
-        className={`absolute inset-x-0 z-30 max-h-72 min-w-max overflow-auto rounded-xl border border-line-strong bg-surface p-1 shadow-xl shadow-black/20 ${
-          dropUp ? "bottom-full mb-1" : "top-full mt-1"
-        }`}
-      >
-        {options.map((option, i) => {
-          const isSelected = option.value === value;
-          return (
-            <li
-              key={option.value}
-              id={`${listId}-${i}`}
-              role="option"
-              aria-selected={isSelected}
-              onMouseEnter={() => setActive(i)}
-              onClick={() => {
-                commit(i);
-                setOpen(false);
-              }}
-              className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-1.5 text-sm ${
-                i === active ? "bg-surface-2 text-fg" : "text-fg-soft"
-              }`}
-            >
-              <span className="truncate">{option.label}</span>
-              {isSelected && (
-                <svg viewBox="0 0 20 20" aria-hidden className="h-4 w-4 shrink-0 text-accent">
-                  <path d="m4.5 10.5 3.5 3.5 7.5-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      {open &&
+        createPortal(
+          <ul
+            ref={listRef}
+            id={listId}
+            role="listbox"
+            aria-labelledby={ariaLabel ? undefined : buttonId}
+            aria-label={ariaLabel}
+            tabIndex={-1}
+            style={position}
+            // Keep focus on the button so its blur handler does not close the list mid-click.
+            onMouseDown={(e) => e.preventDefault()}
+            className="fixed z-50 max-h-72 overflow-auto rounded-xl border border-line-strong bg-surface p-1 shadow-xl shadow-black/20"
+          >
+            {options.map((option, i) => {
+              const isSelected = option.value === value;
+              return (
+                <li
+                  key={option.value}
+                  id={`${listId}-${i}`}
+                  role="option"
+                  aria-selected={isSelected}
+                  onMouseEnter={() => setActive(i)}
+                  onClick={() => {
+                    commit(i);
+                    setOpen(false);
+                  }}
+                  className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-1.5 text-sm ${
+                    i === active ? "bg-surface-2 text-fg" : "text-fg-soft"
+                  }`}
+                >
+                  <span className="truncate">{option.label}</span>
+                  {isSelected && (
+                    <svg viewBox="0 0 20 20" aria-hidden className="h-4 w-4 shrink-0 text-accent">
+                      <path
+                        d="m4.5 10.5 3.5 3.5 7.5-8"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  )}
+                </li>
+              );
+            })}
+          </ul>,
+          document.body,
+        )}
     </div>
   );
 }
