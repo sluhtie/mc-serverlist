@@ -4,6 +4,12 @@ import { CopyAddress } from "./copy-address";
 import { ServerIcon } from "./server-icon";
 import { StatusBadge } from "./status-badge";
 
+const RANK_COLORS: Record<number, string> = {
+  1: "text-amber-300",
+  2: "text-zinc-300",
+  3: "text-orange-400",
+};
+
 export function formatAddress(host: string, port: number) {
   return port === 25565 ? host : `${host}:${port}`;
 }
@@ -17,7 +23,9 @@ export function ServerCard({ server, rank }: { server: ServerListItem; rank?: nu
     >
       <div className="flex items-center gap-4 sm:w-64 sm:shrink-0">
         {rank !== undefined && (
-          <span className="w-8 text-center text-xl font-bold text-zinc-500">#{rank}</span>
+          <span className={`w-8 text-center text-xl font-bold ${RANK_COLORS[rank] ?? "text-zinc-500"}`}>
+            #{rank}
+          </span>
         )}
         <ServerIcon favicon={server.favicon} name={server.name} />
         <div className="min-w-0">

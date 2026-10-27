@@ -75,6 +75,7 @@ export default async function AdminServersPage({ searchParams }: PageProps<"/adm
                       <option value="">{s.featured ? `bis ${s.featuredUntil?.toLocaleDateString("de-DE")}` : "Nein"}</option>
                       <option value="7">7 Tage</option>
                       <option value="30">30 Tage</option>
+                      <option value="90">90 Tage</option>
                       <option value="0">Entfernen</option>
                     </select>
                     <button className="btn-secondary px-2 py-1">OK</button>

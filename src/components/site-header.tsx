@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoMark } from "@/components/brand/logo-mark";
 import { getCurrentUser } from "@/lib/auth/session";
 import { env } from "@/lib/env";
 import { logout } from "@/server/actions/auth";
@@ -6,13 +7,11 @@ import { logout } from "@/server/actions/auth";
 export async function SiteHeader() {
   const user = await getCurrentUser();
   return (
-    <header className="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur">
+    <header className="z-20 border-b sm:sticky sm:top-0 border-zinc-800 bg-zinc-950/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-3">
         <Link href="/" className="flex items-center gap-2 text-lg font-bold">
-          <span className="grid h-8 w-8 place-items-center rounded-md bg-brand-600 text-white">
-            ⛏
-          </span>
-          {env.siteName}
+          <LogoMark className="h-9 w-9" />
+          <span className="tracking-tight">{env.siteName}</span>
         </Link>
         <nav className="ml-auto flex flex-wrap items-center gap-2 text-sm">
           <Link href="/" className="rounded-md px-3 py-2 text-zinc-300 hover:bg-zinc-800">

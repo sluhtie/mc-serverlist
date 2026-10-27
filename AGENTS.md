@@ -44,6 +44,7 @@ pass. CI runs the same steps on every pull request.
 src/
   app/                 Routes (pages, layouts, route handlers). Server Components by default.
   components/          Shared UI. `forms/` holds the Client Components that use useActionState.
+    brand/             Logo mark, hero artwork and the shared frame for generated OG images.
   lib/
     db/schema.ts       Single source of truth for the database schema.
     db/index.ts        Drizzle client (`db`, `schema`).
@@ -57,6 +58,8 @@ src/
     status.ts          Background status worker.
     startup.ts         Runs migrations + starts the worker (called from src/instrumentation.ts).
 drizzle/               Generated SQL migrations. Commit them, never edit applied ones.
+public/brand/          Source SVGs of the logo and app icon. The PNG/ICO icons in `src/app/` and
+                       `public/icons/` are rendered from them; re-export all sizes when the logo changes.
 ```
 
 ## Rules

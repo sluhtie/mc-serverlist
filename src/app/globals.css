@@ -11,6 +11,23 @@
   --color-brand-500: #22c55e;
   --color-brand-600: #16a34a;
   --color-brand-700: #15803d;
+
+  --animate-float: float 6s ease-in-out infinite;
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-12px);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float {
+    animation: none;
+  }
 }
 
 :root {
