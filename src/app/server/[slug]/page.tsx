@@ -1,19 +1,32 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CopyAddress } from "@/components/copy-address";
 import { ReportForm } from "@/components/forms/report-form";
+import {
+  ClockIcon,
+  ExternalIcon,
+  RefreshIcon,
+  SignalIcon,
+  StarIcon,
+  TrophyIcon,
+  UsersIcon,
+  VoteIcon,
+} from "@/components/icons";
 import { JsonLd } from "@/components/json-ld";
+import Link from "@/components/link";
 import { Markdown } from "@/components/markdown";
 import { Motd } from "@/components/motd";
+import { PlayerBar } from "@/components/player-bar";
 import { PlayerChart } from "@/components/player-chart";
 import { PlayerHead } from "@/components/player-head";
-import { formatAddress } from "@/components/server-card";
+import { ServerBanner } from "@/components/server-banner";
+import { formatAddress, ServerTags } from "@/components/server-card";
 import { ServerIcon } from "@/components/server-icon";
 import { StatusBadge } from "@/components/status-badge";
 import { getCurrentUser } from "@/lib/auth/session";
-import { COUNTRIES } from "@/lib/constants";
+import { INTL_LOCALE, localizePath } from "@/lib/i18n/config";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { absoluteUrl, pageMetadata, truncate } from "@/lib/seo";
 import {
   getPlayerHistory,
@@ -29,28 +42,49 @@ export async function generateMetadata({
   params,
 }: PageProps<"/server/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const result = await getServerBySlug(slug);
-  if (!result) return { title: "Server nicht gefunden" };
+  const [result, t, locale] = await Promise.all([getServerBySlug(slug), getDictionary(), getLocale()]);
+  if (!result) return { title: t.meta.serverNotFound };
   const { server, monthlyVotes } = result;
   const address = formatAddress(server.host, server.port);
   const status = server.online
-    ? `${server.playersOnline}/${server.playersMax} Spieler online`
-    : "Aktuell offline";
+    ? t.meta.playersOnline(server.playersOnline, server.playersMax)
+    : t.meta.currentlyOffline;
   return pageMetadata({
-    title: `${server.name} – Minecraft Server IP: ${address}`,
+    locale,
+    title: t.meta.serverTitle(server.name, address),
     // Lead with the server's own pitch, then the facts people search for (IP, players).
-    description: `${truncate(server.shortDescription, 90)} IP: ${address} · ${status} · ${monthlyVotes} Votes diesen Monat.`,
+    description: t.meta.serverDescription(truncate(server.shortDescription, 90), address, status, monthlyVotes),
     path: `/server/${server.slug}`,
     index: server.published,
     ownImage: true,
   });
 }
 
-function Stat({ label, value }: { label: string; value: React.ReactNode }) {
+function Stat({
+  label,
+  icon: Icon,
+  children,
+}: {
+  label: string;
+  icon: (props: { className?: string }) => React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <div className="card p-4">
-      <div className="text-xs uppercase tracking-wide text-zinc-500">{label}</div>
-      <div className="mt-1 text-lg font-semibold">{value}</div>
+      <div className="flex items-center gap-1.5 text-xs font-medium tracking-wide text-subtle uppercase">
+        <Icon className="h-3.5 w-3.5 text-accent" />
+        {label}
+      </div>
+      <div className="mt-1.5 font-pixel text-2xl text-fg">{children}</div>
+    </div>
+  );
+}
+
+function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex justify-between gap-4 py-2.5">
+      <dt className="text-muted">{label}</dt>
+      <dd className="truncate text-right font-medium">{children}</dd>
     </div>
   );
 }
@@ -58,7 +92,12 @@ function Stat({ label, value }: { label: string; value: React.ReactNode }) {
 export default async function ServerPage({ params, searchParams }: PageProps<"/server/[slug]">) {
   const { slug } = await params;
   const sp = await searchParams;
-  const [result, user] = await Promise.all([getServerBySlug(slug), getCurrentUser()]);
+  const [result, user, t, locale] = await Promise.all([
+    getServerBySlug(slug),
+    getCurrentUser(),
+    getDictionary(),
+    getLocale(),
+  ]);
   if (!result) notFound();
   const { server, monthlyVotes } = result;
   const canEdit = user && (user.id === server.ownerId || user.role === "admin");
@@ -72,7 +111,8 @@ export default async function ServerPage({ params, searchParams }: PageProps<"/s
   ]);
   const address = formatAddress(server.host, server.port);
   const mainTag = knownTag(server.tags[0]);
-  const url = absoluteUrl(`/server/${server.slug}`);
+  const url = absoluteUrl(localizePath(`/server/${server.slug}`, locale));
+  const intl = INTL_LOCALE[locale];
 
   return (
     <div className="space-y-6">
@@ -80,7 +120,7 @@ export default async function ServerPage({ params, searchParams }: PageProps<"/s
         data={{
           "@context": "https://schema.org",
           "@type": "GameServer",
-          "@id": `${url}#server`,
+          "@id": `${absoluteUrl(`/server/${server.slug}`)}#server`,
           name: server.name,
           url,
           description: server.shortDescription,
@@ -96,52 +136,64 @@ export default async function ServerPage({ params, searchParams }: PageProps<"/s
       />
       <Breadcrumbs
         items={[
-          { name: "Startseite", path: "/" },
-          ...(mainTag ? [{ name: `${mainTag} Server`, path: tagHref(mainTag) }] : []),
+          { name: t.common.home, path: "/" },
+          ...(mainTag ? [{ name: t.gamemodes.tagServers(mainTag), path: tagHref(mainTag) }] : []),
           { name: server.name, path: `/server/${server.slug}` },
         ]}
       />
       {sp.created && (
-        <p className="rounded-lg border border-brand-500/40 bg-brand-500/10 px-4 py-3 text-sm text-brand-300">
-          Dein Server ist jetzt gelistet! Teile den Vote-Link mit deiner Community:{" "}
-          <code className="font-mono">/server/{server.slug}/vote</code>
+        <p className="rounded-2xl border border-brand-500/40 bg-brand-500/10 px-4 py-3 text-sm text-ok">
+          {t.server.created}{" "}
+          <code className="font-mono">{localizePath(`/server/${server.slug}/vote`, locale)}</code>
         </p>
       )}
       {!server.published && (
-        <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
-          Dieser Server ist ausgeblendet und nicht öffentlich sichtbar.
+        <p className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-warn">
+          {t.server.hiddenNotice}
         </p>
       )}
 
-      <header className="card flex flex-col gap-6 p-6 md:flex-row md:items-center">
-        <ServerIcon favicon={server.favicon} name={server.name} size={64} />
-        <div className="min-w-0 flex-1 space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold">{server.name}</h1>
-            <StatusBadge online={server.online} />
-            {result.featured && <span className="tag bg-amber-500/20 text-amber-300">Featured</span>}
-          </div>
-          <p className="text-zinc-400">{server.shortDescription}</p>
-          <div className="flex flex-wrap gap-1.5">
-            {server.tags.map((tag) => {
-              const known = knownTag(tag);
-              return known ? (
-                <Link key={tag} href={tagHref(known)} className="tag hover:bg-zinc-700">
-                  {tag}
-                </Link>
-              ) : (
-                <span key={tag} className="tag">
-                  {tag}
-                </span>
-              );
-            })}
-          </div>
+      <header className="card relative overflow-hidden">
+        <div className="relative h-36 sm:h-44">
+          {/* A custom banner is a 468×60 strip, so it is shown blurred as a backdrop and in full below. */}
+          {server.bannerUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={server.bannerUrl}
+              alt=""
+              className="h-full w-full scale-110 object-cover opacity-70 blur-xl"
+              decoding="async"
+            />
+          ) : (
+            <ServerBanner name={server.name} bannerUrl={null} className="h-full w-full" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/30 to-transparent" />
         </div>
-        <div className="flex flex-col items-stretch gap-2 md:items-end">
-          <CopyAddress address={address} large />
-          <Link href={`/server/${server.slug}/vote`} className="btn-primary">
-            Für diesen Server voten
-          </Link>
+        <div className="relative -mt-16 flex flex-col gap-6 px-6 pb-6 md:flex-row md:items-end">
+          <div className="w-fit rounded-3xl bg-surface p-1.5 shadow-xl ring-1 ring-line">
+            <ServerIcon favicon={server.favicon} name={server.name} size={96} className="rounded-2xl" />
+          </div>
+          <div className="min-w-0 flex-1 space-y-2.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">{server.name}</h1>
+              <StatusBadge online={server.online} />
+              {result.featured && (
+                <span className="tag gap-1 border-amber-400/40 bg-amber-400/15 text-warn">
+                  <StarIcon className="h-3 w-3" /> {t.common.featured}
+                </span>
+              )}
+            </div>
+            <p className="max-w-2xl text-fg-soft">{server.shortDescription}</p>
+            <div className="flex flex-wrap gap-1.5">
+              <ServerTags tags={server.tags} limit={server.tags.length} />
+            </div>
+          </div>
+          <div className="flex flex-col items-stretch gap-2 md:items-end">
+            <CopyAddress address={address} large />
+            <Link href={`/server/${server.slug}/vote`} className="btn-primary px-6 py-3 text-base">
+              <VoteIcon className="h-5 w-5" /> {t.server.voteCta}
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -149,101 +201,118 @@ export default async function ServerPage({ params, searchParams }: PageProps<"/s
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={server.bannerUrl}
-          alt={`${server.name} Banner`}
+          alt={t.common.bannerAlt(server.name)}
           width={468}
           height={60}
-          className="mx-auto h-auto w-full max-w-[468px] rounded-md"
+          className="mx-auto h-auto w-full max-w-[468px] rounded-lg"
           decoding="async"
         />
       )}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        <Stat label="Spieler" value={`${server.playersOnline} / ${server.playersMax}`} />
-        <Stat label="Votes (Monat)" value={monthlyVotes} />
-        <Stat label="Rang" value={rank ? `#${rank}` : "–"} />
-        <Stat label="Uptime (7 Tage)" value={uptime !== null ? `${uptime}%` : "–"} />
-        <Stat label="Ping" value={server.latencyMs !== null ? `${server.latencyMs} ms` : "–"} />
+        <div className="card col-span-2 p-4 md:col-span-1">
+          <div className="flex items-center gap-1.5 text-xs font-medium tracking-wide text-subtle uppercase">
+            <UsersIcon className="h-3.5 w-3.5 text-accent" />
+            {t.server.statPlayers}
+          </div>
+          <div className="mt-1.5 font-pixel text-2xl">
+            {server.playersOnline}
+            <span className="text-subtle">/{server.playersMax}</span>
+          </div>
+          <PlayerBar online={server.playersOnline} max={server.playersMax} className="mt-1" />
+        </div>
+        <Stat label={t.server.statVotes} icon={VoteIcon}>
+          {monthlyVotes}
+        </Stat>
+        <Stat label={t.server.statRank} icon={TrophyIcon}>
+          {rank ? `#${rank}` : "–"}
+        </Stat>
+        <Stat label={t.server.statUptime} icon={ClockIcon}>
+          {uptime !== null ? `${uptime}%` : "–"}
+        </Stat>
+        <Stat label={t.server.statPing} icon={SignalIcon}>
+          {server.latencyMs !== null ? `${server.latencyMs} ms` : "–"}
+        </Stat>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
           {server.motd && (
             <section className="card space-y-3 p-6">
-              <h2 className="font-semibold">MOTD</h2>
+              <h2 className="font-display text-lg font-bold">{t.server.motd}</h2>
               <Motd value={server.motd} />
             </section>
           )}
-          <section className="card space-y-3 p-6">
-            <h2 className="font-semibold">Über den Server</h2>
+          <section className="card space-y-4 p-6">
+            <h2 className="font-display text-lg font-bold">{t.server.about}</h2>
             {server.description ? (
               <Markdown>{server.description}</Markdown>
             ) : (
-              <p className="text-zinc-300">{server.shortDescription}</p>
+              <p className="text-fg-soft">{server.shortDescription}</p>
             )}
           </section>
-          <section className="card space-y-3 p-6">
-            <h2 className="font-semibold">Spieler in den letzten 24 Stunden</h2>
+          <section className="card space-y-4 p-6">
+            <h2 className="font-display text-lg font-bold">{t.server.history}</h2>
             <PlayerChart points={history} />
           </section>
         </div>
 
         <aside className="space-y-6">
-          <section className="card space-y-3 p-6 text-sm">
-            <h2 className="text-base font-semibold">Informationen</h2>
-            <dl className="space-y-2">
-              <div className="flex justify-between gap-4">
-                <dt className="text-zinc-500">Version</dt>
-                <dd className="truncate text-right">{server.version ?? "–"}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-zinc-500">Land</dt>
-                <dd>{server.country ? COUNTRIES[server.country] ?? server.country : "–"}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-zinc-500">Votifier</dt>
-                <dd>{server.votifierEnabled ? "Aktiv" : "Nein"}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-zinc-500">Zuletzt geprüft</dt>
-                <dd>
-                  {server.lastPingedAt
-                    ? server.lastPingedAt.toLocaleTimeString("de-DE", { timeStyle: "short" })
-                    : "–"}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-zinc-500">Eingetragen</dt>
-                <dd>{server.createdAt.toLocaleDateString("de-DE")}</dd>
-              </div>
+          <section className="card p-6 text-sm">
+            <h2 className="font-display text-lg font-bold">{t.server.info}</h2>
+            <dl className="mt-2 divide-y divide-line">
+              <InfoRow label={t.server.version}>{server.version ?? "–"}</InfoRow>
+              <InfoRow label={t.server.country}>
+                {server.country ? (t.countries[server.country] ?? server.country) : "–"}
+              </InfoRow>
+              <InfoRow label={t.server.votifier}>
+                {server.votifierEnabled ? <span className="text-ok">{t.server.active}</span> : t.server.no}
+              </InfoRow>
+              <InfoRow label={t.server.lastChecked}>
+                {server.lastPingedAt ? server.lastPingedAt.toLocaleTimeString(intl, { timeStyle: "short" }) : "–"}
+              </InfoRow>
+              <InfoRow label={t.server.listedSince}>{server.createdAt.toLocaleDateString(intl)}</InfoRow>
             </dl>
-            <div className="flex flex-wrap gap-2 pt-2">
-              {server.website && (
-                <a href={server.website} target="_blank" rel="noopener noreferrer nofollow ugc" className="btn-secondary">
-                  Website
-                </a>
-              )}
-              {server.discord && (
-                <a href={server.discord} target="_blank" rel="noopener noreferrer nofollow ugc" className="btn-secondary">
-                  Discord
-                </a>
-              )}
-            </div>
+            {(server.website || server.discord) && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {server.website && (
+                  <a href={server.website} target="_blank" rel="noopener noreferrer nofollow ugc" className="btn-secondary">
+                    {t.server.website} <ExternalIcon className="h-3.5 w-3.5" />
+                  </a>
+                )}
+                {server.discord && (
+                  <a
+                    href={server.discord}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow ugc"
+                    className="btn border border-indigo-500/40 bg-indigo-500 text-white shadow-[inset_0_-3px_0_rgb(0_0_0/0.2)] hover:bg-indigo-400"
+                  >
+                    {t.server.discord} <ExternalIcon className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </div>
+            )}
           </section>
 
-          <section className="card space-y-3 p-6 text-sm">
-            <h2 className="text-base font-semibold">Top-Voter diesen Monat</h2>
+          <section className="card p-6 text-sm">
+            <h2 className="flex items-center gap-2 font-display text-lg font-bold">
+              <TrophyIcon className="h-4 w-4 text-warn" /> {t.server.topVoters}
+            </h2>
             {topVoters.length === 0 ? (
-              <p className="text-zinc-500">Noch keine Votes. Sei der Erste!</p>
+              <p className="mt-3 text-subtle">{t.server.noVotes}</p>
             ) : (
-              <ol className="space-y-1">
+              <ol className="mt-3 space-y-1">
                 {topVoters.map((v, i) => (
-                  <li key={v.username} className="flex items-center justify-between gap-3">
-                    <span className="flex min-w-0 items-center gap-2 font-mono">
-                      <span className="w-5 text-right text-zinc-500">{i + 1}.</span>
-                      <PlayerHead name={v.username} size={20} />
-                      <span className="truncate">{v.username}</span>
+                  <li
+                    key={v.username}
+                    className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 transition hover:bg-surface-2"
+                  >
+                    <span className="flex min-w-0 items-center gap-2.5">
+                      <span className="w-5 text-right font-pixel text-subtle">{i + 1}</span>
+                      <PlayerHead name={v.username} size={24} />
+                      <span className="truncate font-mono">{v.username}</span>
                     </span>
-                    <span className="text-zinc-400">{v.count}</span>
+                    <span className="font-pixel text-accent">{v.count}</span>
                   </li>
                 ))}
               </ol>
@@ -252,14 +321,16 @@ export default async function ServerPage({ params, searchParams }: PageProps<"/s
 
           {canEdit && (
             <section className="card space-y-3 p-6 text-sm">
-              <h2 className="text-base font-semibold">Verwaltung</h2>
+              <h2 className="font-display text-lg font-bold">{t.server.manage}</h2>
               <div className="flex flex-wrap gap-2">
                 <Link href={`/server/${server.slug}/edit`} className="btn-secondary">
-                  Bearbeiten
+                  {t.common.edit}
                 </Link>
                 <form action={refreshStatusNow}>
                   <input type="hidden" name="id" value={server.id} />
-                  <button className="btn-secondary">Status aktualisieren</button>
+                  <button className="btn-secondary">
+                    <RefreshIcon /> {t.server.refresh}
+                  </button>
                 </form>
               </div>
             </section>

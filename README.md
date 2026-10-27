@@ -4,7 +4,7 @@ An open-source **Minecraft server list** built with Next.js. Server owners list 
 players find them, check live status and vote for their favourites. Votes can be delivered to the
 game server via Votifier/NuVotifier for in-game rewards.
 
-> The website UI is in German. Code and documentation are in English.
+> The website UI is in German (default) and English (`/en`). Code and documentation are in English.
 
 ## Features
 

@@ -14,7 +14,7 @@ export function PlayerHead({ name, size = 24, className = "" }: { name: string; 
       height={size}
       loading="lazy"
       decoding="async"
-      className={`shrink-0 rounded-sm bg-zinc-800 [image-rendering:pixelated] ${className}`}
+      className={`shrink-0 rounded-sm bg-surface-2 [image-rendering:pixelated] ${className}`}
     />
   );
 }

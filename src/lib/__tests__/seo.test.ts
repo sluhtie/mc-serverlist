@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { TAGS } from "../constants";
 import { jsonLd, truncate } from "../seo";
-import { TAG_DESCRIPTIONS, tagFromSlug, tagHref, tagSlug } from "../tags";
+import { LOCALES } from "../i18n/config";
+import { tagDescription, tagFromSlug, tagHref, tagSlug } from "../tags";
 
 describe("truncate", () => {
   it("keeps short text and collapses whitespace", () => {
@@ -42,7 +43,10 @@ describe("game mode slugs", () => {
     expect(tagFromSlug("unknown")).toBeUndefined();
   });
 
-  it("has a description for every tag", () => {
-    for (const tag of TAGS) expect(TAG_DESCRIPTIONS[tag].length).toBeGreaterThan(80);
+  it("has a description for every tag in every locale", () => {
+    for (const locale of LOCALES) {
+      for (const tag of TAGS) expect(tagDescription(tag, locale).length).toBeGreaterThan(80);
+    }
+    expect(tagDescription("Survival", "en")).not.toBe(tagDescription("Survival", "de"));
   });
 });

@@ -1,29 +1,34 @@
+import type { Metadata } from "next";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { pageMetadata } from "@/lib/seo";
 
-export const metadata = pageMetadata({
-  title: "Datenschutz",
-  description: "Datenschutzerklärung: welche Daten die Minecraft Serverliste verarbeitet und warum.",
-  path: "/datenschutz",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const [t, locale] = await Promise.all([getDictionary(), getLocale()]);
+  return pageMetadata({
+    locale,
+    title: t.meta.privacyTitle,
+    description: t.meta.privacyDescription,
+    path: "/datenschutz",
+  });
+}
 
-export default function DatenschutzPage() {
+export default async function DatenschutzPage() {
+  const t = await getDictionary();
   return (
-    <article className="mx-auto max-w-3xl space-y-4 text-zinc-300">
-      <h1 className="text-2xl font-bold text-zinc-100">Datenschutzerklärung</h1>
+    <article className="card mx-auto max-w-3xl space-y-4 p-8 text-fg-soft">
+      <h1 className="font-display text-3xl font-extrabold tracking-tight text-fg">{t.legal.privacyTitle}</h1>
       <p>
-        Platzhalter: Bitte durch eine vollständige Datenschutzerklärung des Betreibers ersetzen
-        (<code>src/app/datenschutz/page.tsx</code>).
+        {t.legal.privacyPlaceholder} (<code>src/app/datenschutz/page.tsx</code>).
       </p>
-      <h2 className="text-lg font-semibold text-zinc-100">Was diese Software speichert</h2>
-      <ul className="list-disc space-y-1 pl-6">
-        <li>Account-Daten: E-Mail, Benutzername, Passwort-Hash (bcrypt).</li>
-        <li>Ein Session-Cookie (<code>mcsl_session</code>), technisch notwendig für den Login.</li>
+      <h2 className="pt-2 font-display text-xl font-bold text-fg">{t.legal.storedTitle}</h2>
+      <ul className="list-disc space-y-1.5 pl-6 marker:text-subtle">
+        <li>{t.legal.storedAccount}</li>
         <li>
-          Votes: Minecraft-Name, Zeitpunkt und ein gesalzener Hash der IP-Adresse zur
-          Missbrauchsvermeidung. Die IP selbst wird nicht gespeichert, aber bei aktivem Votifier
-          an den jeweiligen Minecraft-Server übermittelt.
+          {t.legal.storedSession} <code>mcsl_session</code>
         </li>
-        <li>Optional Cloudflare Turnstile beim Voten, falls vom Betreiber aktiviert.</li>
+        <li>{t.legal.storedPrefs}</li>
+        <li>{t.legal.storedVotes}</li>
+        <li>{t.legal.storedTurnstile}</li>
       </ul>
     </article>
   );

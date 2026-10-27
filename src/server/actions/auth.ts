@@ -2,42 +2,42 @@
 
 import bcrypt from "bcryptjs";
 import { eq, sql } from "drizzle-orm";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createSession, destroySession, requireUser } from "@/lib/auth/session";
 import { db, schema } from "@/lib/db";
 import { env } from "@/lib/env";
 import { fieldErrorsFrom, str, type FormState } from "@/lib/form";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+import { getDictionary, localRedirect } from "@/lib/i18n/server";
 import { getClientIp, rateLimit } from "@/lib/security";
 
 const { users } = schema;
 
-const passwordSchema = z
-  .string()
-  .min(8, "Mindestens 8 Zeichen")
-  .max(128, "Höchstens 128 Zeichen");
+// Built per request, so validation messages come in the visitor's language.
+const passwordSchema = (t: Dictionary) =>
+  z.string().min(8, t.errors.minChars(8)).max(128, t.errors.maxChars(128));
 
-const registerSchema = z.object({
-  email: z.email("Ungültige E-Mail-Adresse").max(255),
-  username: z
-    .string()
-    .regex(/^[A-Za-z0-9_]{3,32}$/, "3–32 Zeichen, nur Buchstaben, Zahlen und _"),
-  password: passwordSchema,
-});
+const registerSchema = (t: Dictionary) =>
+  z.object({
+    email: z.email(t.errors.invalidEmail).max(255),
+    username: z.string().regex(/^[A-Za-z0-9_]{3,32}$/, t.errors.usernameRule),
+    password: passwordSchema(t),
+  });
 
 let dummyHash: string | undefined;
 
+/** Only same-site paths; `next` holds an internal path, localized on redirect. */
 function safeNext(next: string) {
   return next.startsWith("/") && !next.startsWith("//") ? next : "/";
 }
 
 export async function register(_prev: FormState, formData: FormData): Promise<FormState> {
-  const ip = await getClientIp();
+  const [ip, t] = await Promise.all([getClientIp(), getDictionary()]);
   if (!rateLimit(`register:${ip}`, 5, 60 * 60 * 1000)) {
-    return { error: "Zu viele Registrierungen. Bitte später erneut versuchen." };
+    return { error: t.errors.tooManyRegistrations };
   }
 
-  const parsed = registerSchema.safeParse({
+  const parsed = registerSchema(t).safeParse({
     email: str(formData, "email").toLowerCase(),
     username: str(formData, "username"),
     password: formData.get("password"),
@@ -50,9 +50,9 @@ export async function register(_prev: FormState, formData: FormData): Promise<Fo
     .from(users)
     .where(sql`lower(${users.email}) = ${email} or lower(${users.username}) = ${username.toLowerCase()}`);
   if (existing.some((u) => u.email.toLowerCase() === email)) {
-    return { fieldErrors: { email: "E-Mail ist bereits registriert" } };
+    return { fieldErrors: { email: t.errors.emailTaken } };
   }
-  if (existing.length > 0) return { fieldErrors: { username: "Benutzername ist vergeben" } };
+  if (existing.length > 0) return { fieldErrors: { username: t.errors.usernameTaken } };
 
   const role = env.adminEmails.includes(email) ? "admin" : "user";
   const [user] = await db
@@ -61,13 +61,13 @@ export async function register(_prev: FormState, formData: FormData): Promise<Fo
     .returning({ id: users.id });
 
   await createSession(user.id);
-  redirect(safeNext(str(formData, "next") || "/account"));
+  return localRedirect(safeNext(str(formData, "next") || "/account"));
 }
 
 export async function login(_prev: FormState, formData: FormData): Promise<FormState> {
-  const ip = await getClientIp();
+  const [ip, t] = await Promise.all([getClientIp(), getDictionary()]);
   if (!rateLimit(`login:${ip}`, 10, 15 * 60 * 1000)) {
-    return { error: "Zu viele Anmeldeversuche. Bitte in 15 Minuten erneut versuchen." };
+    return { error: t.errors.tooManyLogins };
   }
 
   const identifier = str(formData, "identifier").toLowerCase();
@@ -82,31 +82,31 @@ export async function login(_prev: FormState, formData: FormData): Promise<FormS
   dummyHash ??= await bcrypt.hash("timing-equalizer", 12);
   const hash = user?.passwordHash ?? dummyHash;
   const valid = await bcrypt.compare(password, hash);
-  if (!user || !valid) return { error: "E-Mail/Benutzername oder Passwort ist falsch." };
-  if (user.banned) return { error: "Dieser Account wurde gesperrt." };
+  if (!user || !valid) return { error: t.errors.invalidLogin };
+  if (user.banned) return { error: t.errors.banned };
 
   if (user.role !== "admin" && env.adminEmails.includes(user.email.toLowerCase())) {
     await db.update(users).set({ role: "admin" }).where(eq(users.id, user.id));
   }
 
   await createSession(user.id);
-  redirect(safeNext(str(formData, "next") || "/"));
+  return localRedirect(safeNext(str(formData, "next") || "/"));
 }
 
 export async function logout() {
   await destroySession();
-  redirect("/");
+  await localRedirect("/");
 }
 
 export async function changePassword(_prev: FormState, formData: FormData): Promise<FormState> {
-  const user = await requireUser("/account");
+  const [user, t] = await Promise.all([requireUser("/account"), getDictionary()]);
   const current = String(formData.get("current") ?? "");
-  const parsed = passwordSchema.safeParse(formData.get("password"));
+  const parsed = passwordSchema(t).safeParse(formData.get("password"));
   if (!parsed.success) return { fieldErrors: { password: parsed.error.issues[0].message } };
 
   const [row] = await db.select().from(users).where(eq(users.id, user.id));
   if (!row || !(await bcrypt.compare(current, row.passwordHash))) {
-    return { fieldErrors: { current: "Aktuelles Passwort ist falsch" } };
+    return { fieldErrors: { current: t.errors.wrongPassword } };
   }
   await db
     .update(users)
@@ -115,5 +115,5 @@ export async function changePassword(_prev: FormState, formData: FormData): Prom
   // Sign out every other device.
   await db.delete(schema.sessions).where(eq(schema.sessions.userId, user.id));
   await createSession(user.id);
-  return { success: "Passwort geändert." };
+  return { success: t.errors.passwordChanged };
 }

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { env } from "./env";
-
-export const SITE_DESCRIPTION =
-  "Finde die besten Minecraft Server: Live-Status, Spielerzahlen, Server-IPs und ein monatliches Vote-Ranking für Survival, SkyBlock, BedWars und mehr.";
+import { LOCALES, OG_LOCALE, localizePath, type Locale } from "./i18n/config";
+import { dictionaries } from "./i18n/dictionaries";
 
 /** Google cuts descriptions at roughly 155–160 characters. */
 export const DESCRIPTION_MAX = 160;
@@ -20,17 +19,27 @@ export function absoluteUrl(path: string) {
   return path === "/" ? env.appUrl : `${env.appUrl}${path}`;
 }
 
-const DEFAULT_IMAGE = {
-  url: "/opengraph-image",
-  width: 1200,
-  height: 630,
-  alt: "Minecraft Serverliste mit Live-Status und Votes",
-};
+const IMAGE_SIZE = { width: 1200, height: 630 };
+
+/**
+ * hreflang alternates for an internal path: every locale plus x-default, which points to the
+ * German root URL because the site has no language picker page.
+ */
+export function languageAlternates(path: string) {
+  return {
+    ...Object.fromEntries(LOCALES.map((l) => [l, localizePath(path, l)])),
+    "x-default": path,
+  };
+}
 
 type PageMetadataInput = {
+  locale: Locale;
   title: string;
   description: string;
-  /** Canonical path, e.g. "/server/foo". Leave out for pages without a canonical URL. */
+  /**
+   * Internal path, e.g. "/server/foo"; the canonical URL is its localized version. Leave out
+   * for pages without a canonical URL.
+   */
   path?: string;
   /** false renders `noindex, follow`, e.g. for filtered lists or private pages. */
   index?: boolean;
@@ -47,6 +56,7 @@ type PageMetadataInput = {
  * so every page builds the full objects here instead of relying on the root layout.
  */
 export function pageMetadata({
+  locale,
   title,
   description,
   path,
@@ -56,22 +66,34 @@ export function pageMetadata({
   image,
 }: PageMetadataInput): Metadata {
   const text = truncate(description);
+  const url = path && localizePath(path, locale);
   // Replacing `openGraph` drops the inherited root opengraph-image, so link it again. The key
   // must be absent for routes with their own image file, or Next drops that file too.
   const images = ownImage
     ? {}
-    : { images: [image ? { ...DEFAULT_IMAGE, url: image, alt: title } : DEFAULT_IMAGE] };
+    : {
+        images: [
+          image
+            ? { ...IMAGE_SIZE, url: localizePath(image, locale), alt: title }
+            : {
+                ...IMAGE_SIZE,
+                url: localizePath("/opengraph-image", locale),
+                alt: dictionaries[locale].meta.defaultImageAlt,
+              },
+        ],
+      };
   return {
     title: absoluteTitle ? { absolute: title } : title,
     description: text,
     // Spread instead of `key: undefined`, which would wipe what the root layout sets.
-    ...(path && { alternates: { canonical: path, languages: { de: path, "x-default": path } } }),
+    ...(path && { alternates: { canonical: url, languages: languageAlternates(path) } }),
     ...(!index && { robots: { index: false, follow: true } }),
     openGraph: {
       type: "website",
-      locale: "de_DE",
+      locale: OG_LOCALE[locale],
+      alternateLocale: LOCALES.filter((l) => l !== locale).map((l) => OG_LOCALE[l]),
       siteName: env.siteName,
-      url: path,
+      url,
       title,
       description: text,
       ...images,

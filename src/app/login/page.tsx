@@ -1,19 +1,21 @@
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+import { AuthShell } from "@/components/auth-shell";
 import { LoginForm } from "@/components/forms/auth-forms";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getDictionary, localRedirect } from "@/lib/i18n/server";
 import { NOINDEX } from "@/lib/seo";
 
-export const metadata = { title: "Anmelden", robots: NOINDEX };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getDictionary()).meta.login, robots: NOINDEX };
+}
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const { next } = await searchParams;
-  if (await getCurrentUser()) redirect("/account");
+  if (await getCurrentUser()) await localRedirect("/account");
+  const t = await getDictionary();
   return (
-    <div className="mx-auto max-w-sm space-y-6">
-      <h1 className="text-center text-2xl font-bold">Anmelden</h1>
-      <div className="card p-6">
-        <LoginForm next={typeof next === "string" ? next : undefined} />
-      </div>
-    </div>
+    <AuthShell title={t.auth.loginTitle} subtitle={t.auth.loginSubtitle}>
+      <LoginForm next={typeof next === "string" ? next : undefined} />
+    </AuthShell>
   );
 }

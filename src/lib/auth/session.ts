@@ -2,10 +2,10 @@ import "server-only";
 import crypto from "node:crypto";
 import { and, eq, gt, lt } from "drizzle-orm";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { cache } from "react";
 import { db, schema } from "@/lib/db";
 import { env } from "@/lib/env";
+import { localRedirect } from "@/lib/i18n/server";
 
 const COOKIE_NAME = "mcsl_session";
 const SESSION_DAYS = 30;
@@ -72,12 +72,13 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
 
 export async function requireUser(next = "/") {
   const user = await getCurrentUser();
-  if (!user) redirect(`/login?next=${encodeURIComponent(next)}`);
+  // `next` stays an internal path; the login action localizes it again.
+  if (!user) return localRedirect(`/login?next=${encodeURIComponent(next)}`);
   return user;
 }
 
 export async function requireAdmin() {
   const user = await requireUser("/admin");
-  if (user.role !== "admin") redirect("/");
+  if (user.role !== "admin") await localRedirect("/");
   return user;
 }

@@ -1,57 +1,62 @@
-import Link from "next/link";
+import { StarIcon, VoteIcon } from "@/components/icons";
+import Link from "@/components/link";
+import { getDictionary } from "@/lib/i18n/server";
 import type { ServerListItem } from "@/lib/servers";
 import { CopyAddress } from "./copy-address";
+import { PlayerBar } from "./player-bar";
 import { formatAddress } from "./server-card";
 import { ServerBanner } from "./server-banner";
 import { ServerIcon } from "./server-icon";
 import { StatusBadge } from "./status-badge";
 
 /** Vertical card with banner artwork, used for the featured and newest sections. */
-export function ServerTile({ server, highlight = false }: { server: ServerListItem; highlight?: boolean }) {
+export async function ServerTile({ server, highlight = false }: { server: ServerListItem; highlight?: boolean }) {
+  const t = await getDictionary();
   return (
     <article
-      className={`card group flex flex-col overflow-hidden transition hover:-translate-y-0.5 ${
-        highlight
-          ? "border-amber-500/40 hover:border-amber-400/70 hover:shadow-lg hover:shadow-amber-500/10"
-          : "hover:border-zinc-700"
+      className={`card card-hover group relative flex flex-col overflow-hidden ${
+        highlight ? "border-amber-400/50 ring-1 ring-amber-400/20" : ""
       }`}
     >
-      <Link href={`/server/${server.slug}`} className="relative block h-24 overflow-hidden" tabIndex={-1}>
-        <ServerBanner name={server.name} bannerUrl={server.bannerUrl} className="h-full w-full" />
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/20 to-transparent" />
+      <div className="relative h-28 overflow-hidden">
+        <ServerBanner
+          name={server.name}
+          bannerUrl={server.bannerUrl}
+          className="h-full w-full transition-transform duration-500 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/10 to-transparent" />
         {highlight && (
-          <span className="tag absolute left-3 top-3 gap-1 bg-amber-400 font-semibold text-amber-950 shadow">
-            ★ Featured
+          <span className="tag absolute top-3 left-3 gap-1 border-amber-300 bg-amber-400 font-semibold text-amber-950 shadow">
+            <StarIcon className="h-3 w-3" /> {t.common.featured}
           </span>
         )}
-      </Link>
-      <div className="relative -mt-7 flex flex-1 flex-col gap-3 px-4 pb-4">
+      </div>
+      <div className="relative -mt-8 flex flex-1 flex-col gap-3 px-4 pb-4">
         <div className="flex items-end gap-3">
-          <div className="rounded-lg bg-zinc-900 p-1 ring-1 ring-zinc-800">
+          <div className="rounded-2xl bg-surface p-1 shadow-md ring-1 ring-line">
             <ServerIcon favicon={server.favicon} name={server.name} size={52} />
           </div>
           <div className="min-w-0 pb-0.5">
             <Link
               href={`/server/${server.slug}`}
-              className="block truncate font-semibold text-zinc-100 hover:text-brand-400"
+              className="block truncate font-display text-base font-bold text-fg transition after:absolute after:inset-0 group-hover:text-accent"
             >
               {server.name}
             </Link>
-            <div className="mt-1 flex items-center gap-2 text-xs text-zinc-400">
+            <div className="mt-1">
               <StatusBadge online={server.online} />
-              <span>
-                <strong className="text-zinc-200">{server.playersOnline}</strong>/{server.playersMax}
-              </span>
             </div>
           </div>
         </div>
-        <p className="line-clamp-2 flex-1 text-sm text-zinc-400">{server.shortDescription}</p>
+        <p className="line-clamp-2 flex-1 text-sm text-muted">{server.shortDescription}</p>
+        <PlayerBar online={server.playersOnline} max={server.playersMax} label={t.common.players} />
         <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <CopyAddress address={formatAddress(server.host, server.port)} />
+          <div className="relative z-10 min-w-0">
+            <CopyAddress address={formatAddress(server.host, server.port)} compact />
           </div>
-          <span className="shrink-0 text-sm text-zinc-400" title="Votes diesen Monat">
-            <strong className="text-brand-400">{server.monthlyVotes}</strong> Votes
+          <span className="flex shrink-0 items-center gap-1 text-sm" title={t.common.votesThisMonth}>
+            <VoteIcon className="h-4 w-4 text-accent" />
+            <strong className="font-pixel text-base">{server.monthlyVotes}</strong>
           </span>
         </div>
       </div>

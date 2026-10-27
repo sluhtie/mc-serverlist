@@ -1,4 +1,5 @@
 import { TAGS } from "./constants";
+import type { Locale } from "./i18n/config";
 
 export type Tag = (typeof TAGS)[number];
 
@@ -20,11 +21,7 @@ export function knownTag(value: string | undefined): Tag | undefined {
   return TAGS.find((tag) => tag === value);
 }
 
-/**
- * Intro text for each game mode landing page. Unique copy per page gives search engines
- * something to rank besides the server list itself.
- */
-export const TAG_DESCRIPTIONS: Record<Tag, string> = {
+const TAG_DESCRIPTIONS_DE: Record<Tag, string> = {
   Survival:
     "Klassisches Minecraft: Rohstoffe sammeln, Häuser bauen und gegen Monster überleben. Hier findest du Survival Server mit Freunden, Community und oft eigenen Plugins wie Jobs oder Grundstücksschutz.",
   SMP: "SMP steht für Survival Multiplayer. Auf diesen Servern spielst du gemeinsam mit einer festen Community in einer Welt, oft mit wenig Plugins und viel Freiheit.",
@@ -72,3 +69,60 @@ export const TAG_DESCRIPTIONS: Record<Tag, string> = {
   Network:
     "Große Netzwerke mit vielen Spielmodi unter einer Adresse: Lobby, Minigames, Survival und mehr. Ideal, wenn du Abwechslung suchst.",
 };
+
+const TAG_DESCRIPTIONS_EN: Record<Tag, string> = {
+  Survival:
+    "Classic Minecraft: gather resources, build houses and survive the monsters. Find Survival servers with friends, a community and often custom plugins like jobs or land claims.",
+  SMP: "SMP stands for Survival Multiplayer. On these servers you play together with a steady community in one world, often with few plugins and a lot of freedom.",
+  Vanilla:
+    "Minecraft the way Mojang made it: no mods and as few plugins as possible. Ideal if you are looking for the original feel in multiplayer.",
+  Creative:
+    "Unlimited blocks and no monsters: on Creative servers you build huge projects, join build contests or get your own plot.",
+  SkyBlock:
+    "You start on a tiny island in the sky and build an empire from very few resources. SkyBlock servers offer island rankings, shops and challenges.",
+  OneBlock:
+    "Everything starts with a single block that keeps regenerating. On OneBlock servers you unlock new biomes, mobs and items phase by phase.",
+  Factions:
+    "Found a faction, claim land and fight other teams. Factions servers are all about raids, alliances and PvP around your base.",
+  Prison:
+    "Start as a prisoner, mine ores and rank up step by step. Prison servers revolve around economy, ranks and the road to freedom.",
+  Minigames:
+    "Quick rounds in between: Minigame servers offer modes like BedWars, SkyWars, Build Battle or Murder Mystery.",
+  BedWars:
+    "Protect your bed, collect resources and destroy the other teams' beds. Find BedWars servers with leaderboards, stats and different team sizes.",
+  SkyWars:
+    "Every player starts on their own island, loots chests and fights for the win. SkyWars servers offer fast PvP rounds with kits and statistics.",
+  PvP: "Your combat skills are what counts here. PvP servers offer arenas, duels, FFA and tournaments for everyone who wants to compete with other players.",
+  Practice:
+    "Train your PvP in duels and ranked matches. Practice servers offer different kits, Elo leaderboards and tournaments.",
+  Hardcore:
+    "One life, no second chance: on Hardcore servers death is final or punished hard. For everyone looking for real thrills.",
+  Anarchy:
+    "No rules and no admins stepping in. On Anarchy servers anything goes, from griefing to hacks. Not for the faint-hearted.",
+  Towny:
+    "Found a town, join a nation and engage in trade and politics. Towny servers combine Survival with city building and diplomacy.",
+  Economy:
+    "Earn money with jobs, shops and trading and build a fortune. Economy servers have their own economy with player markets and auctions.",
+  Roleplay:
+    "Slip into a role and experience stories with other players. Roleplay servers offer their own worlds, professions, cities and events.",
+  Modded:
+    "More than Vanilla: modded servers run modpacks on Forge or Fabric and add new tech, magic, dimensions and items to the game.",
+  Pixelmon:
+    "Catch, train and battle Pokémon in Minecraft. Pixelmon servers offer gyms, leaderboards and a world full of Pokémon.",
+  Parkour:
+    "Jump through challenging courses and chase personal bests. Parkour servers offer maps from easy to extremely hard.",
+  "Hide and Seek":
+    "Hide as a block or hunt down the other players. Hide and Seek servers offer fun rounds on lovingly built maps.",
+  Crossplay:
+    "Play with friends no matter if they are on Java or Bedrock. Crossplay servers can be joined from PC, console and phone.",
+  Network:
+    "Large networks with many game modes behind one address: lobby, minigames, survival and more. Ideal if you are looking for variety.",
+};
+
+/**
+ * Intro text for each game mode landing page. Unique copy per page gives search engines
+ * something to rank besides the server list itself.
+ */
+export function tagDescription(tag: Tag, locale: Locale) {
+  return (locale === "en" ? TAG_DESCRIPTIONS_EN : TAG_DESCRIPTIONS_DE)[tag];
+}

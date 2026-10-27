@@ -11,5 +11,5 @@
 - [ ] `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` pass
 - [ ] Tests added or updated for new logic
 - [ ] Migration generated and committed (if `schema.ts` changed)
-- [ ] UI texts in German, code and comments in English
+- [ ] UI texts in both dictionaries (German and English), code and comments in English
 - [ ] Docs updated (README, `.env.example`, AGENTS.md) if behaviour or config changed

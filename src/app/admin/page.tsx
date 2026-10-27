@@ -1,9 +1,13 @@
 import { eq, gte, sql } from "drizzle-orm";
 import { requireAdmin } from "@/lib/auth/session";
 import { db, schema } from "@/lib/db";
+import type { Metadata } from "next";
+import { getDictionary } from "@/lib/i18n/server";
 import { NOINDEX } from "@/lib/seo";
 
-export const metadata = { title: "Admin", robots: NOINDEX };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getDictionary()).meta.admin, robots: NOINDEX };
+}
 
 async function count(query: Promise<{ n: number }[]>) {
   const [row] = await query;
@@ -12,6 +16,7 @@ async function count(query: Promise<{ n: number }[]>) {
 
 export default async function AdminPage() {
   await requireAdmin();
+  const t = await getDictionary();
   const { servers, users, votes, reports } = schema;
   const n = sql<number>`count(*)::int`;
   const [serverCount, onlineCount, userCount, votesToday, openReports] = await Promise.all([
@@ -23,21 +28,21 @@ export default async function AdminPage() {
   ]);
 
   const stats = [
-    ["Server", serverCount],
-    ["Davon online", onlineCount],
-    ["Benutzer", userCount],
-    ["Votes (24 h)", votesToday],
-    ["Offene Meldungen", openReports],
+    [t.admin.statServers, serverCount],
+    [t.admin.statOnline, onlineCount],
+    [t.admin.statUsers, userCount],
+    [t.admin.statVotes, votesToday],
+    [t.admin.statReports, openReports],
   ] as const;
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Admin-Übersicht</h1>
+      <h1 className="font-display text-3xl font-extrabold tracking-tight">{t.admin.overviewTitle}</h1>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         {stats.map(([label, value]) => (
           <div key={label} className="card p-4">
-            <div className="text-xs uppercase tracking-wide text-zinc-500">{label}</div>
-            <div className="mt-1 text-2xl font-bold">{value}</div>
+            <div className="text-xs font-medium tracking-wide text-subtle uppercase">{label}</div>
+            <div className="mt-1.5 font-pixel text-3xl">{value}</div>
           </div>
         ))}
       </div>

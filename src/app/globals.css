@@ -1,8 +1,43 @@
 @import "tailwindcss";
 
+/*
+ * Theme: light by default, dark via the OS preference or an explicit choice. The choice is
+ * stored in the mcsl_theme cookie and rendered as <html data-theme>, so there is no flash.
+ * Components use the semantic colors below (bg-surface, text-muted, border-line, …) instead
+ * of fixed palette colors, which keeps both themes in sync.
+ */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+}
+
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-bricolage);
+  --font-pixel: var(--font-pixelify);
+
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-inset: var(--inset);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-fg-soft: var(--fg-soft);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-accent: var(--accent);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
 }
 
 @theme {
@@ -11,65 +46,290 @@
   --color-brand-500: #22c55e;
   --color-brand-600: #16a34a;
   --color-brand-700: #15803d;
+  --color-brand-800: #166534;
+  --color-brand-900: #14532d;
+  /* Minecraft's experience bar. */
+  --color-xp: #80ff20;
 
   --animate-float: float 6s ease-in-out infinite;
+  --animate-rise: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-twinkle: twinkle 3s ease-in-out infinite;
+  --animate-drift: drift 60s linear infinite;
+  --animate-glow: glow 3s ease-in-out infinite;
+
   @keyframes float {
     0%,
     100% {
-      transform: translateY(0);
+      transform: translateY(0) rotate(0deg);
     }
     50% {
-      transform: translateY(-12px);
+      transform: translateY(-14px) rotate(1.5deg);
     }
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-float {
-    animation: none;
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes twinkle {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.25;
+    }
+  }
+  /* One hero-art width (SVG user units), where the duplicated clouds line up again. */
+  @keyframes drift {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-1200px);
+    }
+  }
+  @keyframes glow {
+    0%,
+    100% {
+      opacity: 0.55;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.9;
+      transform: scale(1.08);
+    }
   }
 }
 
 :root {
+  color-scheme: light;
+  --page: #f3f1ea;
+  --surface: #ffffff;
+  --surface-2: #f1efe7;
+  --inset: #faf9f5;
+  --line: #e2dfd4;
+  --line-strong: #cdc9bb;
+  --fg: #1d1c19;
+  --fg-soft: #3b3933;
+  --muted: #66625a;
+  --subtle: #8c877c;
+  --accent: #15803d;
+  --ok: #15803d;
+  --warn: #b45309;
+  --danger: #b91c1c;
+  --info: #0369a1;
+  --grid: rgb(29 28 25 / 0.045);
+  --glow: rgb(34 197 94 / 0.18);
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(29 28 25 / 0.06),
+    0 10px 28px -16px rgb(29 28 25 / 0.22);
+  --shadow-lift: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 2px 4px rgb(29 28 25 / 0.06),
+    0 22px 40px -20px rgb(29 28 25 / 0.32);
+}
+
+/* Duplicated below for the OS preference; CSS has no way to share one block. */
+:root[data-theme="dark"] {
   color-scheme: dark;
+  --page: #0a0c0f;
+  --surface: #12151a;
+  --surface-2: #1a1e25;
+  --inset: #0d0f13;
+  --line: #232832;
+  --line-strong: #313844;
+  --fg: #eef1f4;
+  --fg-soft: #c8ced6;
+  --muted: #98a1ad;
+  --subtle: #69717e;
+  --accent: #4ade80;
+  --ok: #4ade80;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  --info: #7dd3fc;
+  --grid: rgb(255 255 255 / 0.035);
+  --glow: rgb(34 197 94 / 0.22);
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 1px 2px rgb(0 0 0 / 0.5),
+    0 14px 32px -18px rgb(0 0 0 / 0.8);
+  --shadow-lift: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 2px 4px rgb(0 0 0 / 0.5),
+    0 26px 48px -22px rgb(0 0 0 / 0.9);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0a0c0f;
+    --surface: #12151a;
+    --surface-2: #1a1e25;
+    --inset: #0d0f13;
+    --line: #232832;
+    --line-strong: #313844;
+    --fg: #eef1f4;
+    --fg-soft: #c8ced6;
+    --muted: #98a1ad;
+    --subtle: #69717e;
+    --accent: #4ade80;
+    --ok: #4ade80;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --info: #7dd3fc;
+    --grid: rgb(255 255 255 / 0.035);
+    --glow: rgb(34 197 94 / 0.22);
+    --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 1px 2px rgb(0 0 0 / 0.5),
+      0 14px 32px -18px rgb(0 0 0 / 0.8);
+    --shadow-lift: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 2px 4px rgb(0 0 0 / 0.5),
+      0 26px 48px -22px rgb(0 0 0 / 0.9);
+  }
 }
 
 body {
-  @apply bg-zinc-950 text-zinc-100;
+  @apply bg-page text-fg;
+  position: relative;
+}
+
+/* Block grid and a soft glow at the top of every page, fading out towards the content. */
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 900px;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 50% 0%, var(--glow), transparent 70%),
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 32px 32px;
+  mask-image: linear-gradient(to bottom, black 30%, transparent);
+}
+
+::selection {
+  background: rgb(34 197 94 / 0.3);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @utility card {
-  @apply rounded-xl border border-zinc-800 bg-zinc-900/60;
+  @apply rounded-2xl border border-line bg-surface;
+  box-shadow: var(--shadow-card);
 }
+/* Cards that are links or contain one main link: lift on hover. */
+@utility card-hover {
+  @apply transition duration-200 hover:-translate-y-0.5 hover:border-line-strong;
+  &:hover {
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+/* Buttons are chunky, like Minecraft's: a darker bottom edge that flattens when pressed. */
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60;
+  @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold whitespace-nowrap transition duration-150 select-none active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60;
 }
 @utility btn-primary {
-  @apply btn bg-brand-600 text-white hover:bg-brand-500;
+  @apply btn border border-brand-700/60 text-white;
+  background: linear-gradient(to bottom, #2fcf66, #16a34a);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    inset 0 -3px 0 rgb(0 0 0 / 0.22),
+    0 8px 18px -8px rgb(22 163 74 / 0.7);
+  text-shadow: 0 1px 0 rgb(0 0 0 / 0.2);
+  &:hover {
+    filter: brightness(1.07);
+  }
+  &:active {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.2),
+      inset 0 -1px 0 rgb(0 0 0 / 0.22);
+  }
 }
 @utility btn-secondary {
-  @apply btn border border-zinc-700 bg-zinc-800 text-zinc-100 hover:bg-zinc-700;
+  @apply btn border border-line-strong bg-surface-2 text-fg hover:border-subtle;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    inset 0 -2px 0 rgb(0 0 0 / 0.08);
+  &:active {
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.12);
+  }
+}
+@utility btn-ghost {
+  @apply btn text-fg-soft hover:bg-surface-2 hover:text-fg active:translate-y-0;
 }
 @utility btn-danger {
-  @apply btn bg-red-600 text-white hover:bg-red-500;
+  @apply btn border border-red-700/60 text-white;
+  background: linear-gradient(to bottom, #ef4444, #dc2626);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.3),
+    inset 0 -3px 0 rgb(0 0 0 / 0.22);
+  &:hover {
+    filter: brightness(1.07);
+  }
 }
 @utility input {
-  @apply w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500;
+  @apply w-full rounded-xl border border-line-strong bg-inset px-3.5 py-2.5 text-sm text-fg transition placeholder:text-subtle hover:border-subtle focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 focus:outline-none;
 }
 @utility label {
-  @apply mb-1 block text-sm font-medium text-zinc-300;
+  @apply mb-1.5 block text-sm font-medium text-fg-soft;
 }
 @utility field-error {
-  @apply mt-1 text-sm text-red-400;
+  @apply mt-1.5 text-sm text-danger;
 }
 @utility tag {
-  @apply inline-flex items-center rounded-md bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-300;
+  @apply inline-flex items-center rounded-lg border border-line bg-surface-2 px-2 py-0.5 text-xs font-medium text-fg-soft;
+}
+@utility link {
+  @apply font-medium text-accent underline-offset-4 hover:underline;
+}
+/* Small pixel-font label above section headings. */
+@utility eyebrow {
+  @apply font-pixel text-xs font-medium tracking-[0.18em] text-accent uppercase;
 }
 /* Native checkbox restyled: keeps keyboard, form and screen reader behaviour for free. */
 @utility checkbox {
-  @apply grid h-4 w-4 shrink-0 cursor-pointer appearance-none place-content-center rounded border border-zinc-600 bg-zinc-950 transition checked:border-brand-500 checked:bg-brand-600 hover:border-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950;
+  @apply grid h-4.5 w-4.5 shrink-0 cursor-pointer appearance-none place-content-center rounded-md border border-line-strong bg-inset transition checked:border-brand-600 checked:bg-brand-600 hover:border-subtle focus-visible:ring-4 focus-visible:ring-brand-500/20 focus-visible:outline-none;
   &:checked {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3.5 8.5 3 3 6-7' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-size: 100% 100%;
   }
+}
+/* Segmented bar like Minecraft's experience bar; set the fill with --fill (0–100%). */
+@utility xp-bar {
+  @apply relative h-2 overflow-hidden rounded-[3px] border border-black/40 bg-black/25 dark:bg-black/50;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--fill, 0%);
+    background: linear-gradient(to bottom, #b9ff6b, var(--color-xp) 45%, #4fb30f);
+    box-shadow: 0 0 8px rgb(128 255 32 / 0.5);
+  }
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 1px), rgb(0 0 0 / 0.45) calc(10% - 1px) 10%);
+  }
+}
+/* Grass on dirt, drawn as pixel rows; used as a divider above the footer. */
+@utility grass-strip {
+  height: 16px;
+  image-rendering: pixelated;
+  background:
+    linear-gradient(to bottom, transparent 0 4px, #6b4226 4px) 0 0 / 100% 100%,
+    repeating-linear-gradient(90deg, #4ade80 0 8px, #22c55e 8px 16px, #16a34a 16px 20px, #22c55e 20px 32px) 0 0 / 100% 6px no-repeat,
+    repeating-linear-gradient(90deg, #8a5a32 0 12px, #6b4226 12px 20px, #a16b3c 20px 24px, #7a4c2a 24px 32px) 0 6px / 100% 10px no-repeat;
 }
