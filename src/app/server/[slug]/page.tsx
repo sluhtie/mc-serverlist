@@ -29,7 +29,6 @@ export async function generateMetadata({
   return {
     title: `${server.name} – ${formatAddress(server.host, server.port)}`,
     description: server.shortDescription,
-    openGraph: { images: server.bannerUrl ? [server.bannerUrl] : undefined },
   };
 }
 

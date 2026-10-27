@@ -96,7 +96,48 @@ export async function listFeaturedServers() {
     .from(servers)
     .where(and(eq(servers.published, true), gt(servers.featuredUntil, new Date())))
     .orderBy(desc(monthlyVotes))
-    .limit(5);
+    .limit(6);
+}
+
+export async function listNewestServers(limit = 4) {
+  return db
+    .select(listColumns)
+    .from(servers)
+    .where(eq(servers.published, true))
+    .orderBy(desc(servers.createdAt))
+    .limit(limit);
+}
+
+/** Headline numbers for the homepage. */
+export async function getSiteStats() {
+  const [[serverStats], [voteStats]] = await Promise.all([
+    db
+      .select({
+        servers: sql<number>`count(*)::int`,
+        online: sql<number>`count(*) filter (where ${servers.online})::int`,
+        players: sql<number>`coalesce(sum(${servers.playersOnline}) filter (where ${servers.online}), 0)::int`,
+      })
+      .from(servers)
+      .where(eq(servers.published, true)),
+    db
+      .select({ votes: sql<number>`count(*)::int` })
+      .from(votes)
+      .where(sql`${votes.createdAt} >= date_trunc('month', now())`),
+  ]);
+  return { ...serverStats, votes: voteStats.votes };
+}
+
+/** How many published servers use each tag, most used first. */
+export async function getTagCounts(limit = 12) {
+  const result = await db.execute<{ tag: string; count: number }>(sql`
+    select tag, count(*)::int as count
+    from ${servers}, unnest(${servers.tags}) as tag
+    where ${servers.published} = true
+    group by tag
+    order by count desc, tag asc
+    limit ${limit}
+  `);
+  return result.map((r) => ({ tag: r.tag, count: Number(r.count) }));
 }
 
 export async function getServerBySlug(slug: string) {

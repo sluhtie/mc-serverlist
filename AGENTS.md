@@ -44,6 +44,8 @@ pass. CI runs the same steps on every pull request.
 src/
   app/                 Routes (pages, layouts, route handlers). Server Components by default.
   components/          Shared UI. `forms/` holds the Client Components that use useActionState.
+    brand/             Logo mark, hero artwork and the shared frame for generated OG images.
+    ui/                Custom form controls (e.g. `Select`). Use them instead of native <select>.
   lib/
     db/schema.ts       Single source of truth for the database schema.
     db/index.ts        Drizzle client (`db`, `schema`).
@@ -57,6 +59,8 @@ src/
     status.ts          Background status worker.
     startup.ts         Runs migrations + starts the worker (called from src/instrumentation.ts).
 drizzle/               Generated SQL migrations. Commit them, never edit applied ones.
+public/brand/          Source SVGs of the logo and app icon. The PNG/ICO icons in `src/app/` and
+                       `public/icons/` are rendered from them; re-export all sizes when the logo changes.
 ```
 
 ## Rules
@@ -93,7 +97,8 @@ drizzle/               Generated SQL migrations. Commit them, never edit applied
 - Match the surrounding code: naming, comment density, file layout. Comments explain *why*.
 - UI strings are German (`Server eintragen`, `Jetzt voten`). Keep the tone informal ("du").
 - Tailwind utility classes; reuse the shared utilities in `globals.css` (`card`, `btn-primary`,
-  `btn-secondary`, `btn-danger`, `input`, `label`, `tag`, `field-error`).
+  `btn-secondary`, `btn-danger`, `input`, `label`, `tag`, `field-error`, `checkbox`).
+  Use `components/ui/select.tsx` instead of a native `<select>`, which looks off in the dark theme.
 - Add or update Vitest tests for logic in `src/lib/` (protocol code, parsing, validation).
 
 ### Pull requests

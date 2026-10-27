@@ -2,6 +2,7 @@
 
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { requireAdmin } from "@/lib/auth/session";
 import { db, schema } from "@/lib/db";
 import { str } from "@/lib/form";
@@ -18,12 +19,19 @@ export async function setPublished(formData: FormData) {
   revalidatePath("/");
 }
 
+const featuredSchema = z.object({
+  id: z.uuid(),
+  // "0" removes the highlight; an empty value means "keep as is".
+  days: z.enum(["0", "7", "30", "90"]),
+});
+
 export async function setFeatured(formData: FormData) {
   await requireAdmin();
-  const days = Number(str(formData, "days"));
-  const featuredUntil =
-    Number.isFinite(days) && days > 0 ? new Date(Date.now() + days * 24 * 60 * 60 * 1000) : null;
-  await db.update(servers).set({ featuredUntil }).where(eq(servers.id, str(formData, "id")));
+  const parsed = featuredSchema.safeParse({ id: str(formData, "id"), days: str(formData, "days") });
+  if (!parsed.success) return;
+  const days = Number(parsed.data.days);
+  const featuredUntil = days > 0 ? new Date(Date.now() + days * 24 * 60 * 60 * 1000) : null;
+  await db.update(servers).set({ featuredUntil }).where(eq(servers.id, parsed.data.id));
   revalidatePath("/admin/servers");
   revalidatePath("/");
 }

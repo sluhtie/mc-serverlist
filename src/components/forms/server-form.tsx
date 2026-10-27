@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Select } from "@/components/ui/select";
 import { COUNTRIES, MAX_TAGS, TAGS } from "@/lib/constants";
 import type { FormState } from "@/lib/form";
 import { createServer, updateServer } from "@/server/actions/servers";
@@ -179,14 +180,15 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
             <label className="label" htmlFor="country">
               Land
             </label>
-            <select id="country" name="country" defaultValue={values.country ?? ""} className="input">
-              <option value="">Keine Angabe</option>
-              {Object.entries(COUNTRIES).map(([code, label]) => (
-                <option key={code} value={code}>
-                  {label}
-                </option>
-              ))}
-            </select>
+            <Select
+              id="country"
+              name="country"
+              defaultValue={values.country ?? ""}
+              options={[
+                { value: "", label: "Keine Angabe" },
+                ...Object.entries(COUNTRIES).map(([value, label]) => ({ value, label })),
+              ]}
+            />
           </div>
           <div>
             <label className="label" htmlFor="bannerUrl">
@@ -235,12 +237,13 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
 
       <fieldset className="card space-y-4 p-6">
         <legend className="px-2 text-lg font-semibold">Votifier (Vote-Belohnungen)</legend>
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex w-fit cursor-pointer items-center gap-2 text-sm">
           <input
             type="checkbox"
             name="votifierEnabled"
             checked={votifier}
             onChange={(e) => setVotifier(e.target.checked)}
+            className="checkbox"
           />
           Votes per Votifier/NuVotifier an meinen Server senden
         </label>
@@ -276,16 +279,16 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
               <label className="label" htmlFor="votifierProtocol">
                 Protokoll
               </label>
-              <select
+              <Select
                 id="votifierProtocol"
                 name="votifierProtocol"
                 value={protocol}
-                onChange={(e) => setProtocol(e.target.value as "v1" | "v2")}
-                className="input"
-              >
-                <option value="v2">v2 (Token)</option>
-                <option value="v1">v1 (RSA)</option>
-              </select>
+                onValueChange={(value) => setProtocol(value === "v1" ? "v1" : "v2")}
+                options={[
+                  { value: "v2", label: "v2 (Token)" },
+                  { value: "v1", label: "v1 (RSA)" },
+                ]}
+              />
             </div>
             {protocol === "v2" ? (
               <div className="sm:col-span-3">

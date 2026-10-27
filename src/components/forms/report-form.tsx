@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { REPORT_REASONS } from "@/lib/constants";
 import type { FormState } from "@/lib/form";
 import { reportServer } from "@/server/actions/servers";
+import { Select } from "@/components/ui/select";
 import { FieldError, FormMessage } from "./form-message";
 
 const initial: FormState = {};
@@ -17,16 +18,12 @@ export function ReportForm({ serverId }: { serverId: string }) {
       <form action={action} className="mt-3 space-y-3">
         <FormMessage state={state} />
         <input type="hidden" name="serverId" value={serverId} />
-        <select name="reason" className="input" defaultValue="">
-          <option value="" disabled>
-            Grund wählen…
-          </option>
-          {Object.entries(REPORT_REASONS).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
+        <Select
+          name="reason"
+          aria-label="Grund"
+          placeholder="Grund wählen…"
+          options={Object.entries(REPORT_REASONS).map(([value, label]) => ({ value, label }))}
+        />
         <FieldError state={state} name="reason" />
         <textarea name="message" rows={3} maxLength={1000} placeholder="Details (optional)" className="input" />
         <button className="btn-secondary" disabled={pending}>
