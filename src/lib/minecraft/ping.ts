@@ -78,8 +78,10 @@ export async function resolveAddress(host: string, port: number) {
   return { host, port };
 }
 
-// Caps how long a host with many records can keep the status worker busy.
-const MAX_ADDRESSES = 3;
+// Hosts behind DDoS protection publish many A records, some of them dead. These caps keep
+// such a host from blocking the status worker for long.
+const MAX_ADDRESSES = 20;
+const CONNECT_TIMEOUT_MS = 2000;
 
 export async function pingServer(
   host: string,
@@ -94,10 +96,13 @@ export async function pingServer(
     return { online: false, error: (err as Error).message };
   }
 
-  // Like the vanilla client, fall through to the next address when one cannot be reached.
+  // Fall through to the next address when one cannot be reached, within twice the timeout overall.
+  const deadline = Date.now() + timeoutMs * 2;
   let result: PingResult | PingFailure = { online: false, error: "no address" };
   for (const address of target.addresses.slice(0, MAX_ADDRESSES)) {
-    result = await pingAddress(address, target.port, host, port, timeoutMs);
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+    result = await pingAddress(address, target.port, host, port, Math.min(timeoutMs, remaining));
     if (result.online) return result;
   }
   return result;
@@ -123,6 +128,13 @@ function pingAddress(
       resolve(result);
     };
 
+    // A dead address usually just drops the SYN, so give up on it quickly and try the next one.
+    const connectTimer = setTimeout(
+      () => finish({ online: false, error: `connect timeout ${address}:${targetPort}` }),
+      Math.min(CONNECT_TIMEOUT_MS, timeoutMs),
+    );
+    socket.once("connect", () => clearTimeout(connectTimer));
+    socket.once("close", () => clearTimeout(connectTimer));
     socket.setTimeout(timeoutMs, () => finish({ online: false, error: "timeout" }));
     socket.on("error", (err) => finish({ online: false, error: err.message }));
     socket.on("close", () => finish({ online: false, error: "connection closed" }));
