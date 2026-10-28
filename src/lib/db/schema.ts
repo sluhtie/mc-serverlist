@@ -2,10 +2,12 @@ import { sql } from "drizzle-orm";
 import {
   bigserial,
   boolean,
+  date,
   index,
   integer,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -187,6 +189,22 @@ export const reports = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("reports_status_idx").on(t.status, t.createdAt)],
+);
+
+/**
+ * Public API requests, counted per day and endpoint. Only aggregated numbers, no IPs or
+ * other data about the caller. `external` means the request did not come from our own pages.
+ */
+export const apiUsage = pgTable(
+  "api_usage",
+  {
+    day: date("day", { mode: "string" }).notNull(),
+    endpoint: varchar("endpoint", { length: 32 }).notNull(),
+    external: boolean("external").notNull(),
+    requests: integer("requests").notNull().default(0),
+    errors: integer("errors").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.day, t.endpoint, t.external] })],
 );
 
 export type User = typeof users.$inferSelect;

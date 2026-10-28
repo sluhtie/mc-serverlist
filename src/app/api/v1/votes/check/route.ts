@@ -1,4 +1,5 @@
 import { and, eq, gt, sql } from "drizzle-orm";
+import { trackApiRequest } from "@/lib/api-usage";
 import { VOTE_COOLDOWN_HOURS } from "@/lib/constants";
 import { db, schema } from "@/lib/db";
 import { isValidPlayerName } from "@/lib/minecraft/player";
@@ -14,6 +15,7 @@ export async function GET(req: Request) {
   const slug = url.searchParams.get("server") ?? "";
   const username = url.searchParams.get("username") ?? "";
   if (!slug || !isValidPlayerName(username)) {
+    trackApiRequest("votes_check", req, 400);
     return Response.json({ error: "invalid_parameters" }, { status: 400 });
   }
   const { servers, votes } = schema;
@@ -31,6 +33,7 @@ export async function GET(req: Request) {
     )
     .orderBy(sql`${votes.createdAt} desc`)
     .limit(1);
+  trackApiRequest("votes_check", req, 200);
   return Response.json(
     { voted: Boolean(row), votedAt: row?.votedAt ?? null },
     { headers: { "Access-Control-Allow-Origin": "*" } },

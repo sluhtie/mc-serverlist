@@ -1,15 +1,18 @@
+import { trackApiRequest } from "@/lib/api-usage";
 import { motdToPlainText } from "@/lib/minecraft/motd";
 import { getServerBySlug } from "@/lib/servers";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: Request, ctx: RouteContext<"/api/v1/servers/[slug]">) {
+export async function GET(req: Request, ctx: RouteContext<"/api/v1/servers/[slug]">) {
   const { slug } = await ctx.params;
   const result = await getServerBySlug(slug);
   if (!result || !result.server.published) {
+    trackApiRequest("servers", req, 404);
     return Response.json({ error: "not_found" }, { status: 404 });
   }
   const { server, monthlyVotes } = result;
+  trackApiRequest("servers", req, 200);
   return Response.json(
     {
       slug: server.slug,
