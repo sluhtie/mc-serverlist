@@ -10,7 +10,6 @@ import { fieldErrorsFrom, str, type FormState } from "@/lib/form";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { getDictionary, localRedirect } from "@/lib/i18n/server";
 import { isValidHost, splitHostPort } from "@/lib/minecraft/address";
-import { pingServer } from "@/lib/minecraft/ping";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getClientIp, rateLimit } from "@/lib/security";
 import { uniqueSlug } from "@/lib/servers";
@@ -125,13 +124,6 @@ function toColumns(data: ServerInput) {
   };
 }
 
-// These come back when nothing listens or a firewall drops/rejects us, not from a wrong address.
-const BLOCKED_ERROR = /EHOSTUNREACH|ECONNREFUSED|ETIMEDOUT|ENETUNREACH|timeout/;
-
-function unreachableMessage(t: Dictionary, error: string, fallback: (error: string) => string) {
-  return BLOCKED_ERROR.test(error) ? t.errors.unreachableBlocked(error) : fallback(error);
-}
-
 async function addressTaken(host: string, port: number, ignoreId?: string) {
   const conditions = [sql`lower(${servers.host}) = ${host}`, eq(servers.port, port)];
   if (ignoreId) conditions.push(ne(servers.id, ignoreId));
@@ -154,19 +146,13 @@ export async function createServer(_prev: FormState, formData: FormData): Promis
     return { fieldErrors: { host: t.errors.alreadyListed } };
   }
 
-  // Only accept servers that actually answer, otherwise the list fills up with dead entries.
-  const status = await pingServer(data.host, data.port);
-  if (!status.online) {
-    return {
-      fieldErrors: { host: unreachableMessage(t, status.error, t.errors.unreachable) },
-    };
-  }
-
   const [created] = await db
     .insert(servers)
     .values({ ...toColumns(data), slug: await uniqueSlug(data.name), ownerId: user.id })
     .returning({ id: servers.id, slug: servers.slug, host: servers.host, port: servers.port });
 
+  // Unreachable servers are listed anyway and simply show as offline: some DDoS filters
+  // block pings from server lists although players can join.
   await refreshServerStatus(created);
   revalidatePath("/");
   return localRedirect(`/server/${created.slug}?created=1`);
@@ -193,10 +179,6 @@ export async function updateServer(_prev: FormState, formData: FormData): Promis
   if (addressChanged) {
     if (await addressTaken(data.host, data.port, server.id)) {
       return { fieldErrors: { host: t.errors.alreadyListed } };
-    }
-    const status = await pingServer(data.host, data.port);
-    if (!status.online) {
-      return { fieldErrors: { host: unreachableMessage(t, status.error, t.errors.unreachableShort) } };
     }
   }
 
