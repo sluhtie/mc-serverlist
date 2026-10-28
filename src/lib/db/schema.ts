@@ -119,6 +119,11 @@ export const servers = pgTable(
     votifierPublicKey: text("votifier_public_key"),
     votifierToken: text("votifier_token"),
 
+    // Bedrock is only shown to players; the status worker pings the Java address.
+    bedrockEnabled: boolean("bedrock_enabled").notNull().default(false),
+    bedrockHost: varchar("bedrock_host", { length: 255 }),
+    bedrockPort: integer("bedrock_port"),
+
     // Latest result of the status worker.
     online: boolean("online").notNull().default(false),
     playersOnline: integer("players_online").notNull().default(0),

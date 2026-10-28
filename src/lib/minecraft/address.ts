@@ -58,3 +58,17 @@ const HOSTNAME_RE = /^(?=.{1,253}$)([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\
 export function isValidHost(host: string) {
   return net.isIP(host) !== 0 || HOSTNAME_RE.test(host);
 }
+
+/**
+ * Splits a pasted "host:port" (or "[ipv6]:port") into its parts. Players copy addresses in
+ * that form, so the address field accepts it instead of rejecting it as an invalid host.
+ */
+export function splitHostPort(input: string): { host: string; port: number | null } {
+  const value = input.trim();
+  const bracketed = /^\[([^\]]+)\](?::(\d{1,5}))?$/.exec(value);
+  if (bracketed) return { host: bracketed[1], port: bracketed[2] ? Number(bracketed[2]) : null };
+  // More than one colon without brackets is a bare IPv6 address.
+  const match = /^([^:]+):(\d{1,5})$/.exec(value);
+  if (match) return { host: match[1], port: Number(match[2]) };
+  return { host: value, port: null };
+}

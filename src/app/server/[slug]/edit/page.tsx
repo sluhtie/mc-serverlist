@@ -41,6 +41,9 @@ export default async function EditServerPage({ params }: PageProps<"/server/[slu
           votifierProtocol: server.votifierProtocol,
           votifierPublicKey: server.votifierPublicKey,
           votifierToken: server.votifierToken,
+          bedrockEnabled: server.bedrockEnabled,
+          bedrockHost: server.bedrockHost,
+          bedrockPort: server.bedrockPort,
         }}
       />
       <form

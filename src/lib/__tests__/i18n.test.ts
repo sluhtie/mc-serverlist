@@ -95,6 +95,8 @@ describe("dictionaries", () => {
       "server.discord",
       "server.reportDetails",
       "serverForm.port",
+      "serverForm.bedrock",
+      "server.bedrock",
       "serverForm.website",
       "markdown.link",
       "admin.api",
