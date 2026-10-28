@@ -209,9 +209,12 @@ body::before {
   background: rgb(34 197 94 / 0.3);
 }
 
-:focus-visible {
-  outline: 2px solid var(--color-brand-500);
-  outline-offset: 2px;
+/* In the base layer, so utilities like focus-visible:outline-none on custom focus styles win. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -154,20 +154,20 @@ export default async function ServerPage({ params, searchParams }: PageProps<"/s
       )}
 
       <header className="card relative overflow-hidden">
-        <div className="relative h-36 sm:h-44">
-          {/* A custom banner is a 468×60 strip, so it is shown blurred as a backdrop and in full below. */}
+        <div className="relative h-36 overflow-hidden sm:h-44">
+          {/* A custom banner is a small 468×60 strip; a light blur hides the upscaling but keeps it recognizable. */}
           {server.bannerUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={server.bannerUrl}
-              alt=""
-              className="h-full w-full scale-110 object-cover opacity-70 blur-xl"
+              alt={t.common.bannerAlt(server.name)}
+              className="h-full w-full scale-105 object-cover blur-[2px]"
               decoding="async"
             />
           ) : (
             <ServerBanner name={server.name} bannerUrl={null} className="h-full w-full" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent to-70%" />
         </div>
         <div className="relative -mt-16 flex flex-col gap-6 px-6 pb-6 md:flex-row md:items-end">
           <div className="w-fit rounded-3xl bg-surface p-1.5 shadow-xl ring-1 ring-line">
@@ -196,18 +196,6 @@ export default async function ServerPage({ params, searchParams }: PageProps<"/s
           </div>
         </div>
       </header>
-
-      {server.bannerUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={server.bannerUrl}
-          alt={t.common.bannerAlt(server.name)}
-          width={468}
-          height={60}
-          className="mx-auto h-auto w-full max-w-[468px] rounded-lg"
-          decoding="async"
-        />
-      )}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         <div className="card col-span-2 p-4 md:col-span-1">
