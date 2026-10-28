@@ -566,7 +566,7 @@ export const de = {
           title: "Aufruf der Website",
           paragraphs: [
             "Bei jedem Aufruf überträgt dein Browser technisch bedingt Daten an unseren Server: IP-Adresse, Datum und Uhrzeit, aufgerufene Adresse, Referrer, Browser und Betriebssystem (User-Agent). Wir brauchen sie, um die Seite auszuliefern und um Missbrauch abzuwehren (Art. 6 Abs. 1 lit. f DSGVO).",
-            "Die Anwendung schreibt keine IP-Adressen in Logdateien. Für die Begrenzung von Anfragen (z. B. bei Login, Registrierung, Votes und Meldungen) hält sie die IP-Adresse höchstens eine Stunde im Arbeitsspeicher, danach wird sie verworfen.",
+            "Die Anwendung schreibt keine IP-Adressen in Logdateien. Für die Begrenzung von Anfragen (z. B. bei Login, Registrierung, Votes und Meldungen) hält sie die IP-Adresse höchstens eine Stunde im Arbeitsspeicher, danach wird sie verworfen. Aufrufe unserer API zählen wir nur anonym, als Anzahl pro Tag und Endpunkt, ohne IP-Adresse oder andere Angaben zum Aufrufer.",
           ],
         },
         {

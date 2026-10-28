@@ -559,7 +559,7 @@ export const en: Dictionary = {
           title: "Visiting the website",
           paragraphs: [
             "With every request, your browser sends technically required data to our server: IP address, date and time, requested address, referrer, browser and operating system (user agent). We need it to deliver the page and to fend off abuse (Art. 6 (1) (f) GDPR).",
-            "The application does not write IP addresses to log files. To rate-limit requests (for example login, registration, votes and reports) it keeps the IP address in memory for at most one hour and then discards it.",
+            "The application does not write IP addresses to log files. To rate-limit requests (for example login, registration, votes and reports) it keeps the IP address in memory for at most one hour and then discards it. Calls to our API are only counted anonymously, as a number per day and endpoint, without the IP address or any other details about the caller.",
           ],
         },
         {
