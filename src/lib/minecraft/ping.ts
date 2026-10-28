@@ -1,6 +1,6 @@
 import { promises as dns } from "node:dns";
 import net from "node:net";
-import { resolvePublicAddresses } from "./address";
+import { resolvePublicAddress } from "./address";
 
 /**
  * Minimal implementation of the Java Edition Server List Ping protocol (1.7+).
@@ -78,45 +78,21 @@ export async function resolveAddress(host: string, port: number) {
   return { host, port };
 }
 
-// Hosts behind DDoS protection publish many A records, some of them dead. These caps keep
-// such a host from blocking the status worker for long.
-const MAX_ADDRESSES = 20;
-const CONNECT_TIMEOUT_MS = 2000;
-
 export async function pingServer(
   host: string,
   port = DEFAULT_PORT,
   timeoutMs = 5000,
 ): Promise<PingResult | PingFailure> {
-  let target: { addresses: string[]; port: number };
+  let target: { host: string; port: number };
   try {
     const resolved = await resolveAddress(host, port);
-    target = { addresses: await resolvePublicAddresses(resolved.host), port: resolved.port };
+    target = { host: await resolvePublicAddress(resolved.host), port: resolved.port };
   } catch (err) {
     return { online: false, error: (err as Error).message };
   }
 
-  // Fall through to the next address when one cannot be reached, within twice the timeout overall.
-  const deadline = Date.now() + timeoutMs * 2;
-  let result: PingResult | PingFailure = { online: false, error: "no address" };
-  for (const address of target.addresses.slice(0, MAX_ADDRESSES)) {
-    const remaining = deadline - Date.now();
-    if (remaining <= 0) break;
-    result = await pingAddress(address, target.port, host, port, Math.min(timeoutMs, remaining));
-    if (result.online) return result;
-  }
-  return result;
-}
-
-function pingAddress(
-  address: string,
-  targetPort: number,
-  host: string,
-  port: number,
-  timeoutMs: number,
-): Promise<PingResult | PingFailure> {
   return new Promise((resolve) => {
-    const socket = net.createConnection({ host: address, port: targetPort });
+    const socket = net.createConnection({ host: target.host, port: target.port });
     let buffer = Buffer.alloc(0);
     let settled = false;
     let sentAt = 0;
@@ -128,13 +104,6 @@ function pingAddress(
       resolve(result);
     };
 
-    // A dead address usually just drops the SYN, so give up on it quickly and try the next one.
-    const connectTimer = setTimeout(
-      () => finish({ online: false, error: `connect timeout ${address}:${targetPort}` }),
-      Math.min(CONNECT_TIMEOUT_MS, timeoutMs),
-    );
-    socket.once("connect", () => clearTimeout(connectTimer));
-    socket.once("close", () => clearTimeout(connectTimer));
     socket.setTimeout(timeoutMs, () => finish({ online: false, error: "timeout" }));
     socket.on("error", (err) => finish({ online: false, error: err.message }));
     socket.on("close", () => finish({ online: false, error: "connection closed" }));

@@ -43,25 +43,14 @@ export function isPrivateAddress(ip: string) {
 
 export class AddressNotAllowedError extends Error {}
 
-/**
- * Resolves a hostname to all IPs that are safe to connect to, IPv4 first: many hosts publish an
- * AAAA record, but Docker networks usually have no IPv6 route, so trying it first fails.
- */
-export async function resolvePublicAddresses(host: string) {
-  const allowPrivate = process.env.ALLOW_PRIVATE_ADDRESSES === "true";
-  const addresses = net.isIP(host)
-    ? [host]
-    : (await dns.lookup(host, { all: true })).sort((a, b) => a.family - b.family).map((a) => a.address);
-  const allowed = allowPrivate ? addresses : addresses.filter((ip) => !isPrivateAddress(ip));
-  if (allowed.length === 0) {
-    throw new AddressNotAllowedError(`${host} resolves to a private address`);
-  }
-  return allowed;
-}
-
 /** Resolves a hostname to an IP that is safe to connect to. */
 export async function resolvePublicAddress(host: string) {
-  return (await resolvePublicAddresses(host))[0];
+  const allowPrivate = process.env.ALLOW_PRIVATE_ADDRESSES === "true";
+  const address = net.isIP(host) ? host : (await dns.lookup(host)).address;
+  if (!allowPrivate && isPrivateAddress(address)) {
+    throw new AddressNotAllowedError(`${host} resolves to a private address`);
+  }
+  return address;
 }
 
 const HOSTNAME_RE = /^(?=.{1,253}$)([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/;
