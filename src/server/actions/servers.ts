@@ -125,6 +125,13 @@ function toColumns(data: ServerInput) {
   };
 }
 
+// These come back when nothing listens or a firewall drops/rejects us, not from a wrong address.
+const BLOCKED_ERROR = /EHOSTUNREACH|ECONNREFUSED|ETIMEDOUT|ENETUNREACH|timeout/;
+
+function unreachableMessage(t: Dictionary, error: string, fallback: (error: string) => string) {
+  return BLOCKED_ERROR.test(error) ? t.errors.unreachableBlocked(error) : fallback(error);
+}
+
 async function addressTaken(host: string, port: number, ignoreId?: string) {
   const conditions = [sql`lower(${servers.host}) = ${host}`, eq(servers.port, port)];
   if (ignoreId) conditions.push(ne(servers.id, ignoreId));
@@ -151,7 +158,7 @@ export async function createServer(_prev: FormState, formData: FormData): Promis
   const status = await pingServer(data.host, data.port);
   if (!status.online) {
     return {
-      fieldErrors: { host: t.errors.unreachable(status.error) },
+      fieldErrors: { host: unreachableMessage(t, status.error, t.errors.unreachable) },
     };
   }
 
@@ -189,7 +196,7 @@ export async function updateServer(_prev: FormState, formData: FormData): Promis
     }
     const status = await pingServer(data.host, data.port);
     if (!status.online) {
-      return { fieldErrors: { host: t.errors.unreachableShort(status.error) } };
+      return { fieldErrors: { host: unreachableMessage(t, status.error, t.errors.unreachableShort) } };
     }
   }
 

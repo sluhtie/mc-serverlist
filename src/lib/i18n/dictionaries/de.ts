@@ -432,6 +432,8 @@ export const de = {
     tooManySubmissions: "Zu viele Einreichungen. Bitte später erneut versuchen.",
     alreadyListed: "Dieser Server ist bereits gelistet",
     unreachable: (error: string) => `Server nicht erreichbar (${error}). Ist er online und die Adresse korrekt?`,
+    unreachableBlocked: (error: string) =>
+      `Server nicht erreichbar (${error}). Die Verbindung wurde abgelehnt oder blockiert: Läuft der Server, und lässt seine Firewall (oder ein DDoS-Schutz) Verbindungen von fremden Servern auf diesen Port zu, nicht nur von Spielern?`,
     unreachableShort: (error: string) => `Server nicht erreichbar (${error}).`,
     noPermission: "Server nicht gefunden oder keine Berechtigung.",
     httpOnly: "Muss mit http:// oder https:// beginnen",
