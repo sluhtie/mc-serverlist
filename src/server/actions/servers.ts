@@ -9,7 +9,7 @@ import { db, schema } from "@/lib/db";
 import { fieldErrorsFrom, str, type FormState } from "@/lib/form";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { getDictionary, localRedirect } from "@/lib/i18n/server";
-import { isValidHost } from "@/lib/minecraft/address";
+import { isValidHost, splitHostPort } from "@/lib/minecraft/address";
 import { pingServer } from "@/lib/minecraft/ping";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getClientIp, rateLimit } from "@/lib/security";
@@ -47,8 +47,14 @@ function serverSchema(t: Dictionary) {
       votifierProtocol: z.enum(["v1", "v2"]),
       votifierPublicKey: z.string().max(2000),
       votifierToken: z.string().max(255),
+      bedrockEnabled: z.boolean(),
+      bedrockHost: z.string().toLowerCase().max(255),
+      bedrockPort: z.coerce.number().int().min(1).max(65535),
     })
     .superRefine((data, ctx) => {
+      if (data.bedrockEnabled && data.bedrockHost && !isValidHost(data.bedrockHost)) {
+        ctx.addIssue({ code: "custom", path: ["bedrockHost"], message: t.errors.invalidAddress });
+      }
       if (!data.votifierEnabled) return;
       if (data.votifierHost && !isValidHost(data.votifierHost)) {
         ctx.addIssue({ code: "custom", path: ["votifierHost"], message: t.errors.invalidAddress });
@@ -68,10 +74,13 @@ function serverSchema(t: Dictionary) {
 type ServerInput = z.infer<ReturnType<typeof serverSchema>>;
 
 function parseServerForm(formData: FormData, t: Dictionary) {
+  // A port typed into the address field ("play.example.net:25603") wins over the port field.
+  const address = splitHostPort(str(formData, "host"));
+  const bedrock = splitHostPort(str(formData, "bedrockHost"));
   return serverSchema(t).safeParse({
     name: str(formData, "name"),
-    host: str(formData, "host"),
-    port: str(formData, "port") || 25565,
+    host: address.host,
+    port: address.port ?? (str(formData, "port") || 25565),
     shortDescription: str(formData, "shortDescription"),
     description: str(formData, "description"),
     website: str(formData, "website"),
@@ -85,6 +94,9 @@ function parseServerForm(formData: FormData, t: Dictionary) {
     votifierProtocol: str(formData, "votifierProtocol") || "v2",
     votifierPublicKey: str(formData, "votifierPublicKey"),
     votifierToken: str(formData, "votifierToken"),
+    bedrockEnabled: formData.get("bedrockEnabled") === "on",
+    bedrockHost: bedrock.host,
+    bedrockPort: bedrock.port ?? (str(formData, "bedrockPort") || 19132),
   });
 }
 
@@ -106,6 +118,10 @@ function toColumns(data: ServerInput) {
     votifierProtocol: data.votifierProtocol,
     votifierPublicKey: data.votifierEnabled ? data.votifierPublicKey || null : null,
     votifierToken: data.votifierEnabled ? data.votifierToken || null : null,
+    bedrockEnabled: data.bedrockEnabled,
+    // Empty means "same as the Java address", resolved when the page renders.
+    bedrockHost: data.bedrockEnabled ? data.bedrockHost || null : null,
+    bedrockPort: data.bedrockEnabled ? data.bedrockPort : null,
   };
 }
 

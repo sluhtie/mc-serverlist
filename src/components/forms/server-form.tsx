@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { Select } from "@/components/ui/select";
 import { COUNTRIES, MAX_TAGS, TAGS } from "@/lib/constants";
 import type { FormState } from "@/lib/form";
@@ -27,6 +27,9 @@ export type ServerFormValues = {
   votifierProtocol: "v1" | "v2";
   votifierPublicKey: string | null;
   votifierToken: string | null;
+  bedrockEnabled: boolean;
+  bedrockHost: string | null;
+  bedrockPort: number | null;
 };
 
 const empty: ServerFormValues = {
@@ -46,6 +49,9 @@ const empty: ServerFormValues = {
   votifierProtocol: "v2",
   votifierPublicKey: null,
   votifierToken: null,
+  bedrockEnabled: false,
+  bedrockHost: null,
+  bedrockPort: 19132,
 };
 
 const initial: FormState = {};
@@ -57,6 +63,7 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
   const [tags, setTags] = useState<string[]>(values.tags);
   const [votifier, setVotifier] = useState(values.votifierEnabled);
   const [protocol, setProtocol] = useState(values.votifierProtocol);
+  const [bedrock, setBedrock] = useState(values.bedrockEnabled);
 
   const toggleTag = (tag: string) =>
     setTags((current) =>
@@ -68,7 +75,17 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
     );
 
   return (
-    <form action={action} className="space-y-8">
+    <form
+      action={action}
+      // React resets a form after its action runs. On a validation error that silently put
+      // the port back to 25565, so submit manually and keep what the user typed.
+      onSubmit={(event) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        startTransition(() => action(formData));
+      }}
+      className="space-y-8"
+    >
       <FormMessage state={state} />
       {values.id && <input type="hidden" name="id" value={values.id} />}
 
@@ -315,6 +332,52 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
                 <FieldError state={state} name="votifierPublicKey" />
               </div>
             )}
+          </div>
+        )}
+      </fieldset>
+
+      <fieldset className="card space-y-4 p-6">
+        <legend className="px-2 font-display text-lg font-bold">{t.serverForm.bedrock}</legend>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="bedrockEnabled"
+            checked={bedrock}
+            onChange={(e) => setBedrock(e.target.checked)}
+            className="checkbox"
+          />
+          {t.serverForm.bedrockEnable}
+        </label>
+        {bedrock && (
+          <div className="grid gap-4 sm:grid-cols-[1fr_8rem]">
+            <div>
+              <label className="label" htmlFor="bedrockHost">
+                {t.serverForm.bedrockHost}
+              </label>
+              <input
+                id="bedrockHost"
+                name="bedrockHost"
+                defaultValue={values.bedrockHost ?? ""}
+                placeholder={t.serverForm.bedrockHostPlaceholder}
+                className="input font-mono"
+              />
+              <FieldError state={state} name="bedrockHost" />
+            </div>
+            <div>
+              <label className="label" htmlFor="bedrockPort">
+                {t.serverForm.port}
+              </label>
+              <input
+                id="bedrockPort"
+                name="bedrockPort"
+                type="number"
+                min={1}
+                max={65535}
+                defaultValue={values.bedrockPort ?? 19132}
+                className="input font-mono"
+              />
+              <FieldError state={state} name="bedrockPort" />
+            </div>
           </div>
         )}
       </fieldset>

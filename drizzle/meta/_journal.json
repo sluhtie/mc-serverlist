@@ -15,6 +15,13 @@
       "when": 1793133600898,
       "tag": "0001_email_and_2fa",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793147162386,
+      "tag": "0002_bedrock_details",
+      "breakpoints": true
     }
   ]
 }

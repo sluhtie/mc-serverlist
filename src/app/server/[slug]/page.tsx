@@ -190,6 +190,14 @@ export default async function ServerPage({ params, searchParams }: PageProps<"/s
           </div>
           <div className="flex flex-col items-stretch gap-2 md:items-end">
             <CopyAddress address={address} large />
+            {server.bedrockEnabled && (
+              <div className="flex items-center gap-2 text-xs text-subtle md:justify-end">
+                <span className="font-semibold tracking-wide uppercase">{t.server.bedrock}</span>
+                {/* Bedrock clients ask for address and port separately, so only the host is copied. */}
+                <CopyAddress address={server.bedrockHost ?? server.host} compact />
+                <span className="font-mono">{t.server.bedrockPort(server.bedrockPort ?? 19132)}</span>
+              </div>
+            )}
             <Link href={`/server/${server.slug}/vote`} className="btn-primary px-6 py-3 text-base">
               <VoteIcon className="h-5 w-5" /> {t.server.voteCta}
             </Link>
@@ -267,6 +275,9 @@ export default async function ServerPage({ params, searchParams }: PageProps<"/s
               </InfoRow>
               <InfoRow label={t.server.votifier}>
                 {server.votifierEnabled ? <span className="text-ok">{t.server.active}</span> : t.server.no}
+              </InfoRow>
+              <InfoRow label={t.server.bedrock}>
+                {server.bedrockEnabled ? <span className="text-ok">{t.server.active}</span> : t.server.no}
               </InfoRow>
               <InfoRow label={t.server.lastChecked}>
                 {server.lastPingedAt ? server.lastPingedAt.toLocaleTimeString(intl, { timeStyle: "short" }) : "–"}
