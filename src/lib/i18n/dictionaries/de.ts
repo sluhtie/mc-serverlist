@@ -1,3 +1,5 @@
+import type { LegalSection, PrivacyContext } from "@/lib/legal";
+
 // German UI strings. This file defines the shape every other dictionary must match.
 // Values that depend on data are functions, so word order can differ between languages.
 
@@ -48,6 +50,7 @@ export const de = {
     adminServers: "Admin · Server",
     adminUsers: "Admin · Benutzer",
     adminReports: "Admin · Meldungen",
+    adminApi: "Admin · API",
     rankingName: "Minecraft Server Ranking",
     settings: "Einstellungen",
     forgotPassword: "Passwort vergessen",
@@ -233,7 +236,6 @@ export const de = {
     noVotes: "Noch keine Votes. Sei der Erste!",
     manage: "Verwaltung",
     refresh: "Status aktualisieren",
-    chartEmpty: "Noch nicht genug Daten für einen Verlauf.",
     chartLabel: (peak: number) => `Spielerverlauf, Höchstwert ${peak}`,
     chartSummary: (avg: number, peak: number) => `Ø ${avg} · Peak ${peak}`,
     now: "Jetzt",
@@ -467,7 +469,6 @@ export const de = {
     statServers: "Server",
     statOnline: "Davon online",
     statUsers: "Benutzer",
-    statVotes: "Votes (24 h)",
     statReports: "Offene Meldungen",
     open: "Offen",
     resolved: "Erledigt",
@@ -504,6 +505,58 @@ export const de = {
     markVerified: "E-Mail bestätigen",
     resetTwoFactor: "2FA zurücksetzen",
     ban: "Sperren",
+    api: "API",
+    range: "Zeitraum",
+    vsPrevious: (change: string, days: number) => `${change} ggü. den ${days} Tagen davor`,
+    noPrevious: "Kein Vergleichswert",
+    statsTitle: (days: number) => `Statistiken der letzten ${days} Tage`,
+    chartVotes: "Votes",
+    chartNewUsers: "Neue Benutzer",
+    chartNewServers: "Neue Server",
+    chartPlayers: "Spieler online",
+    chartPlayersHint: "Summe über alle Server, Verlauf höchstens 30 Tage",
+    chartOnlineServers: "Server online",
+    chartLabel: (title: string, days: number) => `${title}, letzte ${days} Tage`,
+    peakSummary: (avg: string, peak: string) => `Ø ${avg} · Peak ${peak}`,
+    topServers: "Meiste Votes im Zeitraum",
+    topTags: "Beliebteste Spielmodi",
+    noData: "Noch keine Daten.",
+    accountsTitle: "Konten",
+    verified: "E-Mail bestätigt",
+    twoFactor: "2FA aktiv",
+    admins: "Admins",
+    listingsTitle: "Einträge",
+    hidden: "Ausgeblendet",
+    votifier: "Votifier aktiv",
+    featuredNow: "Aktuell featured",
+    playersNow: "Spieler gerade online",
+    apiTitle: "API-Nutzung",
+    apiIntro:
+      "Anfragen an die öffentliche API, pro Tag gezählt. Gespeichert werden nur Summen pro Endpunkt, keine IP-Adressen oder sonstigen Daten der Aufrufer.",
+    apiDocs: "API-Dokumentation",
+    apiRequests: "Anfragen",
+    apiToday: "Anfragen heute",
+    apiExternal: "Davon extern",
+    apiErrorRate: "Fehlerquote",
+    apiPerDay: "Anfragen pro Tag",
+    apiEndpoints: "Endpunkte",
+    apiExternalHint:
+      "Extern heißt: nicht von unseren eigenen Seiten, also z. B. von Server-Plugins oder anderen Websites. Spielerköpfe werden auch von unseren Seiten selbst geladen.",
+    colEndpoint: "Endpunkt",
+    colRequests: "Anfragen",
+    colExternal: "Extern",
+    colErrors: "Fehler",
+  },
+  chart: {
+    empty: "Noch nicht genug Daten für einen Verlauf.",
+    units: {
+      players: (n: string) => `${n} Spieler`,
+      servers: (n: string) => `${n} Server online`,
+      votes: (n: string) => `${n} Votes`,
+      users: (n: string) => `${n} neue Benutzer`,
+      newServers: (n: string) => `${n} neue Server`,
+      requests: (n: string) => `${n} Anfragen`,
+    },
   },
   api: {
     title: "Öffentliche API",
@@ -521,19 +574,151 @@ export const de = {
       "zwischen 8 und 256 Pixeln. Für unbekannte Namen gibt es einen Platzhalter-Kopf statt eines Fehlers.",
   },
   legal: {
-    privacyTitle: "Datenschutzerklärung",
-    privacyPlaceholder: "Platzhalter: Bitte durch eine vollständige Datenschutzerklärung des Betreibers ersetzen",
-    storedTitle: "Was diese Software speichert",
-    storedAccount: "Account-Daten: E-Mail, Benutzername, Passwort-Hash (bcrypt).",
-    storedSession: "Ein Session-Cookie, technisch notwendig für den Login:",
-    storedPrefs:
-      "Optional ein Cookie mit deinem gewählten Farbschema (mcsl_theme), wenn du es umstellst.",
-    storedVotes:
-      "Votes: Minecraft-Name, Zeitpunkt und ein gesalzener Hash der IP-Adresse zur Missbrauchsvermeidung. Die IP selbst wird nicht gespeichert, aber bei aktivem Votifier an den jeweiligen Minecraft-Server übermittelt.",
-    storedTurnstile: "Optional Cloudflare Turnstile beim Voten, falls vom Betreiber aktiviert.",
+    missingOperator:
+      "Die Betreiberangaben fehlen noch. Setze LEGAL_NAME, LEGAL_ADDRESS und LEGAL_EMAIL in der Server-Konfiguration.",
     imprintTitle: "Impressum",
-    imprintText: "Angaben gemäß § 5 DDG. Bitte ersetze diesen Platzhalter in",
-    imprintSuffix: "durch die Angaben des Betreibers.",
+    imprintProvider: "Angaben gemäß § 5 DDG",
+    contact: "Kontakt",
+    phone: "Telefon",
+    email: "E-Mail",
+    responsible: "Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV",
+    imprintSections: [
+      {
+        title: "Verbraucherstreitbeilegung",
+        paragraphs: [
+          "Wir sind nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.",
+        ],
+      },
+      {
+        title: "Haftung für Inhalte",
+        paragraphs: [
+          "Die Einträge der Minecraft Server (Name, Beschreibung, Banner, Links und Vote-Belohnungen) werden von den jeweiligen Serverbetreibern erstellt und verantwortet. Wir prüfen sie nicht vorab. Sobald wir von einem Rechtsverstoß erfahren, entfernen wir den Inhalt umgehend. Nutze dafür die Melden-Funktion auf der Serverseite oder schreib uns.",
+          "Wir sind nicht offiziell mit Mojang Studios oder Microsoft verbunden. Minecraft ist eine Marke von Mojang Synergies AB.",
+        ],
+      },
+      {
+        title: "Haftung für Links",
+        paragraphs: [
+          "Die Serverliste verlinkt auf Websites und Discord-Server Dritter. Für deren Inhalte sind ausschließlich deren Betreiber verantwortlich. Rechtswidrige Inhalte waren zum Zeitpunkt der Verlinkung nicht erkennbar. Wenn du einen problematischen Link findest, melde ihn uns, dann entfernen wir ihn.",
+        ],
+      },
+    ],
+    privacyTitle: "Datenschutzerklärung",
+    privacyIntro: (site: string) =>
+      `Hier erfährst du, welche personenbezogenen Daten ${site} verarbeitet, wofür und auf welcher Rechtsgrundlage. Wir verarbeiten nur, was für den Betrieb der Serverliste nötig ist: Es gibt kein Tracking, keine Analyse-Tools, keine Werbung und keine Cookies von Drittanbietern.`,
+    controllerTitle: "Verantwortlicher",
+    updated: "Stand: Oktober 2026",
+    privacySections: (c: PrivacyContext): LegalSection[] => {
+      const contact = c.email ? `per E-Mail an ${c.email}` : "über die Kontaktdaten im Impressum";
+      return [
+        {
+          title: "Hosting",
+          paragraphs: [
+            `Die Website läuft auf einem von uns gemieteten dedizierten Server, den wir selbst administrieren${
+              c.hosting ? `. Anbieter des Servers ist ${c.hosting}` : ""
+            }. Alle Daten (auch die Datenbank) liegen auf diesem Server. Der Anbieter stellt nur die Hardware und die Netzanbindung bereit und verarbeitet Daten in unserem Auftrag (Art. 28 DSGVO). Rechtsgrundlage ist unser berechtigtes Interesse an einem sicheren und zuverlässigen Betrieb (Art. 6 Abs. 1 lit. f DSGVO).`,
+          ],
+        },
+        {
+          title: "Aufruf der Website",
+          paragraphs: [
+            "Bei jedem Aufruf überträgt dein Browser technisch bedingt Daten an unseren Server: IP-Adresse, Datum und Uhrzeit, aufgerufene Adresse, Referrer, Browser und Betriebssystem (User-Agent). Wir brauchen sie, um die Seite auszuliefern und um Missbrauch abzuwehren (Art. 6 Abs. 1 lit. f DSGVO).",
+            "Die Anwendung schreibt keine IP-Adressen in Logdateien. Für die Begrenzung von Anfragen (z. B. bei Login, Registrierung, Votes und Meldungen) hält sie die IP-Adresse höchstens eine Stunde im Arbeitsspeicher, danach wird sie verworfen. Aufrufe unserer API zählen wir nur anonym, als Anzahl pro Tag und Endpunkt, ohne IP-Adresse oder andere Angaben zum Aufrufer.",
+          ],
+        },
+        {
+          title: "Cookies",
+          paragraphs: [
+            "Wir setzen nur Cookies, die für die Website nötig sind oder die du selbst auslöst. Dafür brauchen wir keine Einwilligung (§ 25 Abs. 2 Nr. 2 TDDDG).",
+          ],
+          items: [
+            "mcsl_session: hält dich nach dem Login angemeldet, gültig bis zum Logout oder höchstens 30 Tage. Auf dem Server speichern wir nur einen Hash des Cookie-Werts.",
+            "mcsl_2fa: verbindet beim Login mit Zwei-Faktor-Authentifizierung die beiden Schritte, gültig 10 Minuten.",
+            "mcsl_theme: merkt sich dein Farbschema (hell oder dunkel), nur wenn du es umstellst, gültig 1 Jahr.",
+          ],
+        },
+        {
+          title: "Benutzerkonto",
+          paragraphs: [
+            "Für ein Konto speichern wir deine E-Mail-Adresse, deinen Benutzernamen, einen Hash deines Passworts (bcrypt, das Passwort selbst kennen wir nicht), den Zeitpunkt der Registrierung und der E-Mail-Bestätigung. Wenn du die Zwei-Faktor-Authentifizierung einschaltest, kommen das verschlüsselte TOTP-Geheimnis und Hashes deiner Wiederherstellungscodes dazu.",
+            "Wir verarbeiten diese Daten, um dir das Konto bereitzustellen (Art. 6 Abs. 1 lit. b DSGVO). Sie bleiben gespeichert, bis du dein Konto löschen lässt. Schreib uns dafür " +
+              contact +
+              ". Server, die du eingetragen hast, werden dabei mitgelöscht.",
+          ],
+        },
+        {
+          title: "E-Mails",
+          paragraphs: [
+            `Wir schicken dir E-Mails, die zu deinem Konto gehören: Bestätigung deiner Adresse, Zurücksetzen des Passworts und Sicherheitshinweise (z. B. bei geänderten Zugangsdaten). Newsletter oder Werbung verschicken wir nicht. Der Versand läuft über einen SMTP-Server${
+              c.mailProvider ? ` von ${c.mailProvider}` : ""
+            }, der die E-Mail-Adresse und den Inhalt der Nachricht zur Zustellung verarbeitet. Die Links in den E-Mails enthalten einmalige Codes, die wir nur als Hash speichern und die nach spätestens 48 Stunden ablaufen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.`,
+          ],
+        },
+        {
+          title: "Server eintragen",
+          paragraphs: [
+            "Wenn du einen Minecraft Server einträgst, speichern wir die Angaben aus dem Formular (Name, Adresse, Beschreibungen, Website, Discord, Banner, Land, Spielmodi und Votifier-Einstellungen) und verknüpfen den Eintrag mit deinem Konto. Bis auf die Votifier-Einstellungen sind diese Angaben öffentlich sichtbar und über unsere API abrufbar, denn genau dafür gibt es die Serverliste (Art. 6 Abs. 1 lit. b DSGVO).",
+            "Für den Live-Status verbinden wir uns regelmäßig mit dem eingetragenen Server und speichern Status, Version, MOTD, Server-Icon und die Anzahl der Spieler. Namen von Spielern fragen wir dabei nicht ab. Den Verlauf der Spielerzahlen löschen wir nach 30 Tagen.",
+          ],
+        },
+        {
+          title: "Voten",
+          paragraphs: [
+            "Für einen Vote speichern wir deinen Minecraft-Namen, den Server, den Zeitpunkt, dein Konto (falls du angemeldet bist) und einen gesalzenen Hash deiner IP-Adresse. Mit dem Hash stellen wir sicher, dass pro Person nur einmal in 24 Stunden gevotet wird; aus ihm lässt sich die IP-Adresse nicht zurückrechnen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b und f DSGVO (faires Ranking, Schutz vor Manipulation).",
+            "Dein Minecraft-Name ist öffentlich: Er erscheint mit deinem Skin-Kopf in der Liste der Top-Voter auf der Serverseite, und Serverbetreiber können über unsere API prüfen, ob ein Name in den letzten 24 Stunden gevotet hat, um Belohnungen zu vergeben. Votes bleiben gespeichert, solange der Server eingetragen ist.",
+            "Hat der Server Votifier eingerichtet, senden wir deinen Minecraft-Namen, deine IP-Adresse und den Zeitpunkt direkt an den Minecraft Server, damit du deine Belohnung im Spiel bekommst. Für die weitere Verarbeitung dort ist der jeweilige Serverbetreiber verantwortlich.",
+          ],
+        },
+        {
+          title: "Spielerköpfe",
+          paragraphs: [
+            "Die Köpfe neben Minecraft-Namen laden wir serverseitig über die öffentliche Schnittstelle von Mojang (Mojang AB, Microsoft) anhand des Namens. Dein Browser verbindet sich dabei nicht mit Mojang, und Mojang erhält nur den Minecraft-Namen, nicht deine IP-Adresse. Die Bilder halten wir höchstens 6 Stunden im Zwischenspeicher.",
+          ],
+        },
+        {
+          title: "Inhalte von Serverbetreibern",
+          paragraphs: [
+            "Banner und Bilder in Serverbeschreibungen binden wir direkt von den Adressen ein, die der Serverbetreiber angegeben hat. Beim Anzeigen lädt dein Browser sie von dort, sodass der jeweilige Anbieter deine IP-Adresse und Browserdaten erhält. Links zu Websites und Discord-Servern öffnest du nur, wenn du sie anklickst.",
+          ],
+        },
+        ...(c.turnstile
+          ? [
+              {
+                title: "Cloudflare Turnstile",
+                paragraphs: [
+                  "Auf der Vote-Seite schützen wir uns mit Cloudflare Turnstile vor automatisierten Votes. Anbieter ist Cloudflare, Inc., 101 Townsend St., San Francisco, CA 94107, USA. Turnstile prüft Merkmale deines Browsers und deiner Verbindung (u. a. IP-Adresse) und setzt dafür keine Cookies zu Werbezwecken. Rechtsgrundlage ist unser berechtigtes Interesse an fairen Votes (Art. 6 Abs. 1 lit. f DSGVO). Cloudflare ist unter dem EU-US Data Privacy Framework zertifiziert. Mehr dazu: https://www.cloudflare.com/privacypolicy/",
+                ],
+              },
+            ]
+          : []),
+        {
+          title: "Meldungen",
+          paragraphs: [
+            "Wenn du einen Server meldest, speichern wir den Grund, deine Nachricht, den Zeitpunkt und, falls du angemeldet bist, dein Konto. Wir nutzen das nur, um die Meldung zu bearbeiten (Art. 6 Abs. 1 lit. f DSGVO).",
+          ],
+        },
+        {
+          title: "Schriftarten",
+          paragraphs: [
+            "Alle Schriftarten liefern wir von unserem eigenen Server aus. Dein Browser verbindet sich dafür nicht mit Google oder anderen Anbietern.",
+          ],
+        },
+        {
+          title: "Kontakt",
+          paragraphs: [
+            "Wenn du uns schreibst, verarbeiten wir deine Angaben, um deine Anfrage zu beantworten (Art. 6 Abs. 1 lit. b oder f DSGVO), und löschen sie, wenn sie erledigt ist und keine Aufbewahrungspflicht besteht.",
+          ],
+        },
+        {
+          title: "Deine Rechte",
+          paragraphs: [
+            `Du hast das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch gegen Verarbeitungen auf Grundlage berechtigter Interessen (Art. 21). Melde dich dafür ${contact}.`,
+            "Außerdem kannst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren, zum Beispiel bei der Behörde deines Wohnorts oder bei der für uns zuständigen Behörde.",
+            "Die Verbindung zur Website ist per TLS verschlüsselt. Eine automatisierte Entscheidungsfindung oder Profiling findet nicht statt.",
+          ],
+        },
+      ];
+    },
   },
   notFound: {
     title: "Hier ist nur Luft",

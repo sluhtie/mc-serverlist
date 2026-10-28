@@ -1,9 +1,63 @@
 {
-  "id": "9c7c0663-9785-4d98-b012-702a827b5d1c",
+  "id": "6e1ef2e1-e021-46e5-ab2c-991b70109c75",
   "prevId": "5e7d7afb-9bfb-432b-a8b1-ba8c93546585",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.api_usage": {
+      "name": "api_usage",
+      "schema": "",
+      "columns": {
+        "day": {
+          "name": "day",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "endpoint": {
+          "name": "endpoint",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "external": {
+          "name": "external",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "requests": {
+          "name": "requests",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "errors": {
+          "name": "errors",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "api_usage_day_endpoint_external_pk": {
+          "name": "api_usage_day_endpoint_external_pk",
+          "columns": [
+            "day",
+            "endpoint",
+            "external"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.recovery_codes": {
       "name": "recovery_codes",
       "schema": "",
@@ -382,25 +436,6 @@
         "votifier_token": {
           "name": "votifier_token",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "bedrock_enabled": {
-          "name": "bedrock_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "bedrock_host": {
-          "name": "bedrock_host",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "bedrock_port": {
-          "name": "bedrock_port",
-          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },

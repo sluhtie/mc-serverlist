@@ -1,3 +1,5 @@
+import { parseLegalOperator } from "@/lib/legal";
+
 // All configuration is read at runtime, so one Docker image works for every environment.
 function bool(value: string | undefined, fallback: boolean) {
   if (value === undefined || value === "") return fallback;
@@ -69,6 +71,10 @@ export const env = {
   get mailFrom() {
     const host = new URL(this.appUrl).hostname.replace(/^www\./, "");
     return process.env.MAIL_FROM || `${this.siteName} <noreply@${host}>`;
+  },
+  /** Operator details for the imprint and privacy policy (LEGAL_* variables). */
+  get legal() {
+    return parseLegalOperator(process.env);
   },
   get secureCookies() {
     return bool(process.env.SECURE_COOKIES, this.appUrl.startsWith("https://"));

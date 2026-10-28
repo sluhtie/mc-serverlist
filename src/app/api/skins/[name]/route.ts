@@ -1,3 +1,4 @@
+import { trackApiRequest } from "@/lib/api-usage";
 import {
   defaultFace,
   getCachedHead,
@@ -35,6 +36,7 @@ export async function GET(req: Request, ctx: RouteContext<"/api/skins/[name]">) 
         : { face: defaultFace(), status: "error" };
   }
 
+  trackApiRequest("skins", req, 200);
   return new Response(new Uint8Array(renderHeadPng(lookup.face, size)), {
     headers: {
       "Content-Type": "image/png",

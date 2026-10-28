@@ -19,8 +19,15 @@
     {
       "idx": 2,
       "version": "7",
-      "when": 1793147162386,
-      "tag": "0002_bedrock_details",
+      "when": 1793137296064,
+      "tag": "0002_api_usage",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793172628741,
+      "tag": "0003_bedrock_details",
       "breakpoints": true
     }
   ]
