@@ -83,6 +83,9 @@ See [`.env.example`](.env.example) for the full list.
 | `SMTP_SECURE` | no | Force implicit TLS on/off (default: on for port 465) |
 | `SMTP_USER` / `SMTP_PASSWORD` | no | SMTP login |
 | `MAIL_FROM` | no | Sender, default `<SITE_NAME> <noreply@<APP_URL domain>>` |
+| `LEGAL_NAME` / `LEGAL_ADDRESS` / `LEGAL_EMAIL` | yes (prod) | Operator shown in the imprint and privacy policy. `LEGAL_ADDRESS` is comma-separated (`Street 1, 12345 City`) |
+| `LEGAL_PHONE` | no | Phone number in the imprint |
+| `LEGAL_HOSTING` / `LEGAL_MAIL_PROVIDER` | no | Hosting and SMTP provider named in the privacy policy (free text) |
 
 ## Deployment
 
