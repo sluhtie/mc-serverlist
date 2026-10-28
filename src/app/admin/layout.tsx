@@ -14,6 +14,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
         <NavLink href="/admin/servers">{t.admin.servers}</NavLink>
         <NavLink href="/admin/users">{t.admin.users}</NavLink>
         <NavLink href="/admin/reports">{t.admin.reports}</NavLink>
+        <NavLink href="/admin/api">{t.admin.api}</NavLink>
       </nav>
       {children}
     </div>

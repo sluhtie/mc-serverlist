@@ -15,6 +15,13 @@
       "when": 1793133600898,
       "tag": "0001_email_and_2fa",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793137296064,
+      "tag": "0002_api_usage",
+      "breakpoints": true
     }
   ]
 }
