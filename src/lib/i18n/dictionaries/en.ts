@@ -428,6 +428,8 @@ export const en: Dictionary = {
     tooManySubmissions: "Too many submissions. Please try again later.",
     alreadyListed: "This server is already listed",
     unreachable: (error) => `Server not reachable (${error}). Is it online and the address correct?`,
+    unreachableBlocked: (error) =>
+      `Server not reachable (${error}). The connection was refused or blocked: is the server running, and does its firewall (or DDoS protection) allow connections from other servers on this port, not only from players?`,
     unreachableShort: (error) => `Server not reachable (${error}).`,
     noPermission: "Server not found or no permission.",
     httpOnly: "Must start with http:// or https://",

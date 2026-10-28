@@ -1,6 +1,6 @@
 import { promises as dns } from "node:dns";
 import net from "node:net";
-import { resolvePublicAddress } from "./address";
+import { resolvePublicAddresses } from "./address";
 
 /**
  * Minimal implementation of the Java Edition Server List Ping protocol (1.7+).
@@ -78,21 +78,40 @@ export async function resolveAddress(host: string, port: number) {
   return { host, port };
 }
 
+// Caps how long a host with many records can keep the status worker busy.
+const MAX_ADDRESSES = 3;
+
 export async function pingServer(
   host: string,
   port = DEFAULT_PORT,
   timeoutMs = 5000,
 ): Promise<PingResult | PingFailure> {
-  let target: { host: string; port: number };
+  let target: { addresses: string[]; port: number };
   try {
     const resolved = await resolveAddress(host, port);
-    target = { host: await resolvePublicAddress(resolved.host), port: resolved.port };
+    target = { addresses: await resolvePublicAddresses(resolved.host), port: resolved.port };
   } catch (err) {
     return { online: false, error: (err as Error).message };
   }
 
+  // Like the vanilla client, fall through to the next address when one cannot be reached.
+  let result: PingResult | PingFailure = { online: false, error: "no address" };
+  for (const address of target.addresses.slice(0, MAX_ADDRESSES)) {
+    result = await pingAddress(address, target.port, host, port, timeoutMs);
+    if (result.online) return result;
+  }
+  return result;
+}
+
+function pingAddress(
+  address: string,
+  targetPort: number,
+  host: string,
+  port: number,
+  timeoutMs: number,
+): Promise<PingResult | PingFailure> {
   return new Promise((resolve) => {
-    const socket = net.createConnection({ host: target.host, port: target.port });
+    const socket = net.createConnection({ host: address, port: targetPort });
     let buffer = Buffer.alloc(0);
     let settled = false;
     let sentAt = 0;
