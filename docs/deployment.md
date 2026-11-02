@@ -23,10 +23,8 @@ ADMIN_EMAILS=you@example.com
 SITE_NAME=MCServerlist
 
 # e-mail (address confirmation, password reset, security notices)
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=noreply@mc-serverlist.net
-SMTP_PASSWORD=<smtp password>
+USESEND_API_KEY=us_...
+USESEND_BASE_URL=          # only for a self-hosted useSend, e.g. https://usesend.example.com
 MAIL_FROM=MCServerlist <noreply@mc-serverlist.net>
 
 # operator for the imprint and privacy policy (kept out of the public repository)
@@ -35,7 +33,7 @@ LEGAL_ADDRESS=Musterstraße 1, 12345 Berlin
 LEGAL_EMAIL=kontakt@example.com
 LEGAL_PHONE=
 LEGAL_HOSTING=Example Hosting GmbH, Beispielweg 2, 54321 Hamburg
-LEGAL_MAIL_PROVIDER=
+LEGAL_MAIL_PROVIDER=useSend, Amazon Web Services EMEA SARL (Amazon SES), 38 Avenue John F. Kennedy, L-1855 Luxemburg
 
 # optional
 TURNSTILE_SITE_KEY=
@@ -51,13 +49,21 @@ interpolates them into the containers. The deployment fails early with a clear m
 ### E-mail
 
 New accounts must confirm their e-mail address before they can add a server, and password
-resets go out by mail, so **SMTP is required in production**. Any provider works (Mailjet,
-Brevo, Postmark, Amazon SES, your host's mail server, …):
+resets go out by mail, so **mail is required in production**. The app sends through the
+[useSend](https://usesend.com) API (hosted or self-hosted, e.g. backed by Amazon SES):
 
-- Port `587` uses STARTTLS, port `465` implicit TLS (`SMTP_SECURE` is set automatically for 465).
+- Create an API key with sending permission in useSend and set it as `USESEND_API_KEY`.
+- For a self-hosted useSend set `USESEND_BASE_URL` to its address (without `/api/v1`).
+- `MAIL_FROM` must use a domain that is verified in useSend, otherwise the API rejects the mail.
+- Update `LEGAL_MAIL_PROVIDER` so the privacy policy names the services that deliver the mails.
+
+When `USESEND_API_KEY` is empty, the app falls back to SMTP (`SMTP_HOST`, `SMTP_PORT`,
+`SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`; port `587` uses STARTTLS, `465` implicit TLS).
+Local development uses this with Mailpit.
+
 - Use a sender on your own domain (`MAIL_FROM`) and add the provider's **SPF** and **DKIM**
   records to your DNS, plus a **DMARC** record, otherwise mails end up in spam.
-- Without `SMTP_HOST` the app logs a warning instead of sending. Admins can confirm an address
+- Without `USESEND_API_KEY` or `SMTP_HOST` the app logs a warning instead of sending. Admins can confirm an address
   by hand under **Admin → Benutzer** if a mail never arrives.
 
 To test, register a new account and check that the confirmation mail arrives.

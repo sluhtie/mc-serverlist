@@ -53,7 +53,8 @@ src/
     auth/session.ts    Cookie sessions: getCurrentUser, requireUser, requireAdmin.
     auth/              tokens.ts (single-use e-mail/login tokens), totp.ts (RFC 6238 2FA),
                        two-factor.ts, verification.ts, crypto.ts (token hashing, secret encryption).
-    mail/              index.ts (SMTP via nodemailer, sendMail/queueMail), templates.ts (DE/EN mails).
+    mail/              index.ts (sendMail/queueMail; useSend API, SMTP fallback),
+                       usesend.ts (useSend HTTP client), templates.ts (DE/EN mails).
     minecraft/         Protocol code: ping.ts (SLP), motd.ts, votifier.ts, address.ts (SSRF guard),
                        skin.ts + png.ts (player heads via the Mojang API), player.ts (name rules).
     servers.ts         Read queries for server listings and stats.

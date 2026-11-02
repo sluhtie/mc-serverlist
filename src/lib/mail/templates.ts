@@ -1,5 +1,5 @@
 // Transactional e-mails in German and English. Pure functions, so they can be unit tested and
-// previewed without SMTP. Layout uses tables and inline styles because mail clients ignore most CSS.
+// previewed without sending. Layout uses tables and inline styles because mail clients ignore most CSS.
 import type { Locale } from "@/lib/i18n/config";
 
 export type MailContent = { subject: string; html: string; text: string };
