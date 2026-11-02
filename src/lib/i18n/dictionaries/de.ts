@@ -1,4 +1,5 @@
 import type { LegalSection, PrivacyContext } from "@/lib/legal";
+import type { VotifierErrorKind } from "@/lib/minecraft/votifier";
 
 // German UI strings. This file defines the shape every other dictionary must match.
 // Values that depend on data are functions, so word order can differ between languages.
@@ -402,6 +403,30 @@ export const de = {
     checking: "Prüfe Server…",
     save: "Änderungen speichern",
     create: "Server eintragen",
+  },
+  votifierTest: {
+    title: "Votifier testen",
+    hint: "Schickt einen Test-Vote mit den Einstellungen oben an deinen Server, auch ohne vorher zu speichern. Er zählt nicht im Ranking.",
+    name: "Spielername für den Test",
+    namePlaceholder: "Leer = dein Benutzername",
+    button: "Test-Vote senden",
+    sending: "Sende Test-Vote…",
+    sentV2: (name: string) => `Test-Vote für ${name} wurde von deinem Server angenommen.`,
+    sentV1: (name: string) =>
+      `Test-Vote für ${name} wurde gesendet. Votifier v1 meldet keinen Erfolg zurück, prüfe deshalb die Server-Konsole.`,
+    errors: {
+      timeout: (target: string) => `${target} antwortet nicht. Ist der Port in der Firewall freigegeben?`,
+      refused: (target: string) => `${target} lehnt die Verbindung ab. Läuft Votifier auf diesem Port?`,
+      unknownHost: (target: string) => `Die Adresse ${target} konnte nicht aufgelöst werden.`,
+      unreachable: (target: string) => `${target} ist nicht erreichbar. Blockiert eine Firewall oder ein DDoS-Filter unsere Verbindung?`,
+      privateAddress: (target: string) => `${target} zeigt auf eine private IP-Adresse. Bitte trage die öffentliche Adresse ein.`,
+      notVotifier: (target: string) => `Auf ${target} antwortet kein Votifier. Prüfe Port und Protokoll.`,
+      rejected: (_target: string, detail?: string) =>
+        `Dein Server hat den Vote abgelehnt${detail ? ` (${detail})` : ""}. Prüfe den Token.`,
+      badKey: () => "Der Public Key ist ungültig. Kopiere den Inhalt von rsa/public.key vollständig.",
+      missingSecret: () => "Token bzw. Public Key fehlt.",
+      unknown: (target: string) => `Der Test-Vote an ${target} ist fehlgeschlagen.`,
+    } as Record<VotifierErrorKind, (target: string, detail?: string) => string>,
   },
   markdown: {
     write: "Schreiben",

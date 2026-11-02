@@ -8,6 +8,7 @@ import { useT } from "@/lib/i18n/client";
 import { createServer, updateServer } from "@/server/actions/servers";
 import { FieldError, FormMessage } from "./form-message";
 import { MarkdownEditor } from "./markdown-editor";
+import { VotifierTest } from "./votifier-test";
 
 export type ServerFormValues = {
   id?: string;
@@ -332,6 +333,7 @@ export function ServerForm({ values = empty }: { values?: ServerFormValues }) {
                 <FieldError state={state} name="votifierPublicKey" />
               </div>
             )}
+            <VotifierTest />
           </div>
         )}
       </fieldset>

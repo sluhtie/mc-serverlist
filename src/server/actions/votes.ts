@@ -3,14 +3,15 @@
 import { and, eq, gt, or, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getCurrentUser, requireUser } from "@/lib/auth/session";
 import { VOTE_COOLDOWN_HOURS } from "@/lib/constants";
 import { db, schema } from "@/lib/db";
 import { env } from "@/lib/env";
 import { str, type FormState } from "@/lib/form";
 import { getDictionary } from "@/lib/i18n/server";
-import { PLAYER_NAME_PATTERN } from "@/lib/minecraft/player";
-import { sendVote } from "@/lib/minecraft/votifier";
+import { isValidHost, splitHostPort } from "@/lib/minecraft/address";
+import { isValidPlayerName, PLAYER_NAME_PATTERN } from "@/lib/minecraft/player";
+import { classifyVotifierError, sendVote } from "@/lib/minecraft/votifier";
 import { getClientIp, hashIp, rateLimit, verifyTurnstile } from "@/lib/security";
 
 const { servers, votes } = schema;
@@ -90,4 +91,59 @@ export async function castVote(_prev: FormState, formData: FormData): Promise<Fo
   return {
     success: delivered ? t.errors.voteDelivered(username) : t.errors.voteThanks(username),
   };
+}
+
+/**
+ * Sends a test vote with the Votifier settings currently typed into the server form, so owners
+ * can check their setup before saving. Nothing is stored and nothing counts towards the ranking.
+ */
+export async function testVotifier(formData: FormData): Promise<FormState> {
+  const [user, t] = await Promise.all([requireUser("/account"), getDictionary()]);
+  const tv = t.votifierTest;
+  // Same bar as adding a server, so throwaway accounts cannot use this to probe ports.
+  if (!user.emailVerified) return { error: t.errors.emailNotVerified };
+  if (!rateLimit(`votifier-test:${user.id}`, 10, 10 * 60 * 1000)) {
+    return { error: t.errors.tooManyRequests };
+  }
+
+  const parsed = z
+    .object({
+      host: z.string().toLowerCase().refine(isValidHost, t.errors.invalidAddress),
+      port: z.coerce.number({ error: t.errors.portMissing }).int().min(1).max(65535),
+      protocol: z.enum(["v1", "v2"]),
+      publicKey: z.string().max(2000),
+      token: z.string().max(255),
+      username: z.string().refine((v) => v === "" || isValidPlayerName(v), t.errors.playerName),
+    })
+    .safeParse({
+      // Same fallback as saving: an empty Votifier host means the server address.
+      host: str(formData, "votifierHost") || splitHostPort(str(formData, "host")).host,
+      port: str(formData, "votifierPort") || undefined,
+      protocol: str(formData, "votifierProtocol") || "v2",
+      publicKey: str(formData, "votifierPublicKey"),
+      token: str(formData, "votifierToken"),
+      username: str(formData, "votifierTestName"),
+    });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const data = parsed.data;
+  if (data.protocol === "v1" && !data.publicKey) return { error: t.errors.keyMissing };
+  if (data.protocol === "v2" && !data.token) return { error: t.errors.tokenMissing };
+
+  const username = data.username || (isValidPlayerName(user.username) ? user.username : "MCServerlist");
+  try {
+    await sendVote(
+      {
+        host: data.host,
+        port: data.port,
+        protocol: data.protocol,
+        publicKey: data.publicKey,
+        token: data.token,
+      },
+      { serviceName: env.siteName, username, address: await getClientIp(), timestamp: Date.now() },
+    );
+  } catch (err) {
+    const { kind, detail } = classifyVotifierError(err);
+    return { error: tv.errors[kind](`${data.host}:${data.port}`, detail) };
+  }
+  return { success: data.protocol === "v1" ? tv.sentV1(username) : tv.sentV2(username) };
 }
