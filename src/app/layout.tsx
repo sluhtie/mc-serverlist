@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Geist, Geist_Mono, Pixelify_Sans } from "next/font/google";
+import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { cookies } from "next/headers";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -26,10 +27,15 @@ const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
 });
 
-// Small pixel accents (eyebrows, ranks). Not for running text.
-const pixelify = Pixelify_Sans({
-  variable: "--font-pixelify",
-  subsets: ["latin"],
+// Small pixel accents (eyebrows, ranks, counters). Not for running text.
+// Monocraft (SIL OFL 1.1, see fonts/Monocraft-OFL.txt) follows the in-game font closely and keeps
+// digits and look-alike letters (0/O, 1/l/I, 5/S, 8/B) distinct. The file is a Latin subset.
+// It is monospaced and draws large glyphs, so it is scaled down to fit the existing font sizes.
+const monocraft = localFont({
+  src: "./fonts/monocraft-latin.woff2",
+  variable: "--font-monocraft",
+  display: "swap",
+  declarations: [{ prop: "size-adjust", value: "90%" }],
 });
 
 export const viewport: Viewport = {
@@ -69,7 +75,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       data-theme={theme === "system" ? undefined : theme}
       // The theme toggle changes data-theme on the client.
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${bricolage.variable} ${pixelify.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${bricolage.variable} ${monocraft.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
         <LocaleProvider locale={locale}>
