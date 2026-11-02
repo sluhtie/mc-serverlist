@@ -1,3 +1,4 @@
+import type { VotifierErrorKind } from "@/lib/minecraft/votifier";
 import type { Dictionary } from "./de";
 
 export const en: Dictionary = {
@@ -398,6 +399,30 @@ export const en: Dictionary = {
     checking: "Checking server…",
     save: "Save changes",
     create: "Add server",
+  },
+  votifierTest: {
+    title: "Test Votifier",
+    hint: "Sends a test vote to your server with the settings above, even before you save. It does not count towards the ranking.",
+    name: "Player name for the test",
+    namePlaceholder: "Empty = your username",
+    button: "Send test vote",
+    sending: "Sending test vote…",
+    sentV2: (name: string) => `Your server accepted the test vote for ${name}.`,
+    sentV1: (name: string) =>
+      `Test vote for ${name} sent. Votifier v1 does not confirm delivery, so check your server console.`,
+    errors: {
+      timeout: (target: string) => `${target} does not respond. Is the port open in your firewall?`,
+      refused: (target: string) => `${target} refused the connection. Is Votifier running on this port?`,
+      unknownHost: (target: string) => `The address ${target} could not be resolved.`,
+      unreachable: (target: string) => `${target} is unreachable. Is a firewall or DDoS filter blocking us?`,
+      privateAddress: (target: string) => `${target} points to a private IP address. Please enter the public address.`,
+      notVotifier: (target: string) => `No Votifier answers on ${target}. Check the port and protocol.`,
+      rejected: (_target: string, detail?: string) =>
+        `Your server rejected the vote${detail ? ` (${detail})` : ""}. Check the token.`,
+      badKey: () => "The public key is invalid. Copy the whole content of rsa/public.key.",
+      missingSecret: () => "Token or public key is missing.",
+      unknown: (target: string) => `The test vote to ${target} failed.`,
+    } as Record<VotifierErrorKind, (target: string, detail?: string) => string>,
   },
   markdown: {
     write: "Write",

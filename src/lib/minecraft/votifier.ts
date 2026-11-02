@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import net from "node:net";
-import { resolvePublicAddress } from "./address";
+import { AddressNotAllowedError, resolvePublicAddress } from "./address";
 
 /**
  * Sends vote notifications to Votifier (v1, RSA) or NuVotifier (v2, token) listeners.
@@ -21,6 +21,48 @@ export type Vote = {
   address: string;
   timestamp: number;
 };
+
+export type VotifierErrorKind =
+  | "timeout"
+  | "refused"
+  | "unknownHost"
+  | "unreachable"
+  | "privateAddress"
+  | "notVotifier"
+  | "rejected"
+  | "badKey"
+  | "missingSecret"
+  | "unknown";
+
+/** A failure we can explain to the server owner. `detail` is the listener's own message, if any. */
+export class VotifierError extends Error {
+  constructor(
+    readonly kind: VotifierErrorKind,
+    message: string,
+    readonly detail?: string,
+  ) {
+    super(message);
+  }
+}
+
+const NODE_ERROR_KINDS: Record<string, VotifierErrorKind> = {
+  ECONNREFUSED: "refused",
+  ECONNRESET: "notVotifier",
+  ETIMEDOUT: "timeout",
+  ENOTFOUND: "unknownHost",
+  EAI_AGAIN: "unknownHost",
+  EHOSTUNREACH: "unreachable",
+  ENETUNREACH: "unreachable",
+};
+
+/** Maps anything sendVote can throw to a kind the UI has a text for. */
+export function classifyVotifierError(err: unknown): { kind: VotifierErrorKind; detail?: string } {
+  if (err instanceof VotifierError) return { kind: err.kind, detail: err.detail };
+  if (err instanceof AddressNotAllowedError) return { kind: "privateAddress" };
+  const code = (err as { code?: unknown } | null)?.code;
+  if (typeof code === "string" && NODE_ERROR_KINDS[code]) return { kind: NODE_ERROR_KINDS[code] };
+  return { kind: "unknown" };
+}
 
 function toPem(key: string) {
   const trimmed = key.trim();
@@ -64,12 +106,12 @@ export async function sendVote(target: VotifierTarget, vote: Vote, timeoutMs = 5
       else resolve();
     };
 
-    socket.setTimeout(timeoutMs, () => finish(new Error("Votifier timeout")));
+    socket.setTimeout(timeoutMs, () => finish(new VotifierError("timeout", "Votifier timeout")));
     socket.on("error", (err) => finish(err));
     socket.on("close", () => {
       // v1 servers close the connection after reading the vote.
       if (sent && target.protocol === "v1") finish();
-      else finish(new Error("Votifier closed the connection"));
+      else finish(new VotifierError("notVotifier", "Votifier closed the connection"));
     });
 
     socket.on("data", (chunk) => {
@@ -79,13 +121,21 @@ export async function sendVote(target: VotifierTarget, vote: Vote, timeoutMs = 5
         const parts = greeting.trim().split(" ");
         try {
           if (target.protocol === "v2") {
-            if (!target.token) throw new Error("Votifier token missing");
+            if (!target.token) throw new VotifierError("missingSecret", "Votifier token missing");
+            if (parts[0] !== "VOTIFIER") throw new VotifierError("notVotifier", "Not a Votifier listener");
             const challenge = parts[2];
-            if (!challenge) throw new Error("Server does not speak Votifier v2");
+            if (!challenge) throw new VotifierError("notVotifier", "Server does not speak Votifier v2");
             socket.write(buildV2Payload(vote, target.token, challenge));
           } else {
-            if (!target.publicKey) throw new Error("Votifier public key missing");
-            socket.write(buildV1Payload(vote, target.publicKey), () => {
+            if (!target.publicKey) throw new VotifierError("missingSecret", "Votifier public key missing");
+            if (parts[0] !== "VOTIFIER") throw new VotifierError("notVotifier", "Not a Votifier listener");
+            let block: Buffer;
+            try {
+              block = buildV1Payload(vote, target.publicKey);
+            } catch {
+              throw new VotifierError("badKey", "Votifier public key is invalid");
+            }
+            socket.write(block, () => {
               sent = true;
               socket.end();
             });
@@ -101,7 +151,10 @@ export async function sendVote(target: VotifierTarget, vote: Vote, timeoutMs = 5
       try {
         const parsed = JSON.parse(response) as { status?: string; cause?: string; error?: string };
         if (parsed.status === "ok") finish();
-        else finish(new Error(parsed.cause || parsed.error || "Votifier rejected the vote"));
+        else {
+          const detail = (parsed.error || parsed.cause || "").slice(0, 200) || undefined;
+          finish(new VotifierError("rejected", detail ?? "Votifier rejected the vote", detail));
+        }
       } catch {
         // Wait for the rest of the JSON response.
       }
