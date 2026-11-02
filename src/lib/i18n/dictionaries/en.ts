@@ -640,8 +640,8 @@ export const en: Dictionary = {
         {
           title: "Emails",
           paragraphs: [
-            `We send you emails that belong to your account: confirming your address, resetting your password and security notices (for example when your login details change). We do not send newsletters or ads. They are sent via an SMTP server${
-              c.mailProvider ? ` run by ${c.mailProvider}` : ""
+            `We send you emails that belong to your account: confirming your address, resetting your password and security notices (for example when your login details change). We do not send newsletters or ads. They are sent via an email delivery service${
+              c.mailProvider ? ` (${c.mailProvider})` : ""
             }, which processes the email address and the message content for delivery. Links in these emails contain single-use codes that we only store as hashes and that expire after 48 hours at most. The legal basis is Art. 6 (1) (b) GDPR.`,
           ],
         },

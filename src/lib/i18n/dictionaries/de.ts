@@ -647,8 +647,8 @@ export const de = {
         {
           title: "E-Mails",
           paragraphs: [
-            `Wir schicken dir E-Mails, die zu deinem Konto gehören: Bestätigung deiner Adresse, Zurücksetzen des Passworts und Sicherheitshinweise (z. B. bei geänderten Zugangsdaten). Newsletter oder Werbung verschicken wir nicht. Der Versand läuft über einen SMTP-Server${
-              c.mailProvider ? ` von ${c.mailProvider}` : ""
+            `Wir schicken dir E-Mails, die zu deinem Konto gehören: Bestätigung deiner Adresse, Zurücksetzen des Passworts und Sicherheitshinweise (z. B. bei geänderten Zugangsdaten). Newsletter oder Werbung verschicken wir nicht. Der Versand läuft über einen E-Mail-Versanddienst${
+              c.mailProvider ? ` (${c.mailProvider})` : ""
             }, der die E-Mail-Adresse und den Inhalt der Nachricht zur Zustellung verarbeitet. Die Links in den E-Mails enthalten einmalige Codes, die wir nur als Hash speichern und die nach spätestens 48 Stunden ablaufen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.`,
           ],
         },

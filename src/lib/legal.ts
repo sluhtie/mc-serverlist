@@ -10,7 +10,7 @@ export type LegalOperator = {
   phone: string | null;
   /** Hosting provider as free text, e.g. "Example GmbH, Musterstraße 1, 12345 Berlin". */
   hosting: string | null;
-  /** Mail provider used for SMTP, as free text. */
+  /** Mail provider(s) that deliver the e-mails (e.g. useSend, Amazon SES), as free text. */
   mailProvider: string | null;
 };
 

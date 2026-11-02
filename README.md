@@ -78,14 +78,16 @@ See [`.env.example`](.env.example) for the full list.
 | `STATUS_WORKER_ENABLED` | no | Run the ping worker in this instance (default `true`) |
 | `STATUS_INTERVAL_SECONDS` | no | Ping interval, minimum 60 (default `300`) |
 | `ALLOW_PRIVATE_ADDRESSES` | no | Allow private IPs as server addresses. Dev only. |
-| `SMTP_HOST` | yes (prod) | SMTP server for account e-mails. Without it no mail is sent, so nobody can confirm their address |
+| `USESEND_API_KEY` | yes (prod) | [useSend](https://usesend.com) API key for account e-mails. Without it (or SMTP) no mail is sent, so nobody can confirm their address |
+| `USESEND_BASE_URL` | no | Base URL of a self-hosted useSend, default `https://app.usesend.com` |
+| `SMTP_HOST` | no | SMTP server, used only when `USESEND_API_KEY` is empty (dev uses Mailpit) |
 | `SMTP_PORT` | no | Default `587` (STARTTLS); use `465` for implicit TLS |
 | `SMTP_SECURE` | no | Force implicit TLS on/off (default: on for port 465) |
 | `SMTP_USER` / `SMTP_PASSWORD` | no | SMTP login |
 | `MAIL_FROM` | no | Sender, default `<SITE_NAME> <noreply@<APP_URL domain>>` |
 | `LEGAL_NAME` / `LEGAL_ADDRESS` / `LEGAL_EMAIL` | yes (prod) | Operator shown in the imprint and privacy policy. `LEGAL_ADDRESS` is comma-separated (`Street 1, 12345 City`) |
 | `LEGAL_PHONE` | no | Phone number in the imprint |
-| `LEGAL_HOSTING` / `LEGAL_MAIL_PROVIDER` | no | Hosting and SMTP provider named in the privacy policy (free text) |
+| `LEGAL_HOSTING` / `LEGAL_MAIL_PROVIDER` | no | Hosting and mail provider(s) named in the privacy policy (free text) |
 
 ## Deployment
 

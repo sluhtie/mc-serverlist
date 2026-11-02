@@ -51,7 +51,15 @@ export const env = {
   get statusIntervalSeconds() {
     return Math.max(60, Number(process.env.STATUS_INTERVAL_SECONDS ?? 300) || 300);
   },
-  /** SMTP server for outgoing mail. Without it, mails are not sent (a warning is logged). */
+  /** API key for useSend (https://usesend.com). When set, mails go through its API instead of SMTP. */
+  get useSendApiKey() {
+    return process.env.USESEND_API_KEY || null;
+  },
+  /** Base URL of the useSend instance; change it when useSend is self-hosted. */
+  get useSendBaseUrl() {
+    return (process.env.USESEND_BASE_URL || "https://app.usesend.com").replace(/\/+$/, "");
+  },
+  /** SMTP fallback (e.g. Mailpit in development). Without useSend or SMTP, mails are not sent. */
   get smtpHost() {
     return process.env.SMTP_HOST || null;
   },
