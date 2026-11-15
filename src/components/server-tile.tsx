@@ -5,11 +5,11 @@ import type { ServerListItem } from "@/lib/servers";
 import { CopyAddress } from "./copy-address";
 import { PlayerBar } from "./player-bar";
 import { formatAddress } from "./server-card";
-import { ServerBanner } from "./server-banner";
+import { BannerImage } from "./banner-image";
 import { ServerIcon } from "./server-icon";
 import { StatusBadge } from "./status-badge";
 
-/** Vertical card with banner artwork, used for the featured and newest sections. */
+/** Vertical card with the server banner (plain without one), used for the featured and newest sections. */
 export async function ServerTile({ server, highlight = false }: { server: ServerListItem; highlight?: boolean }) {
   const t = await getDictionary();
   return (
@@ -18,20 +18,25 @@ export async function ServerTile({ server, highlight = false }: { server: Server
         highlight ? "border-amber-400/50 ring-1 ring-amber-400/20" : ""
       }`}
     >
-      <div className="relative h-28 overflow-hidden">
-        <ServerBanner
-          name={server.name}
-          bannerUrl={server.bannerUrl}
-          className="h-full w-full transition-transform duration-500 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/10 to-transparent" />
-        {highlight && (
-          <span className="tag absolute top-3 left-3 gap-1 border-amber-300 bg-amber-400 font-semibold text-amber-950 shadow">
-            <StarIcon className="h-3 w-3" /> {t.common.featured}
-          </span>
-        )}
-      </div>
-      <div className="relative -mt-8 flex flex-1 flex-col gap-3 px-4 pb-4">
+      {/* Only servers with a working banner get the artwork strip; BannerImage drops its <img>
+          (and with it [data-banner]) when the URL is broken, which collapses the strip. */}
+      {server.bannerUrl && (
+        <div className="relative hidden h-28 overflow-hidden group-has-[[data-banner]]:block">
+          <BannerImage
+            src={server.bannerUrl}
+            alt={t.common.bannerAlt(server.name)}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/10 to-transparent" />
+          {highlight && (
+            <span className="tag absolute top-3 left-3 gap-1 border-amber-300 bg-amber-400 font-semibold text-amber-950 shadow">
+              <StarIcon className="h-3 w-3" /> {t.common.featured}
+            </span>
+          )}
+        </div>
+      )}
+      <div className="relative flex flex-1 flex-col gap-3 px-4 pt-4 pb-4 group-has-[[data-banner]]:-mt-8 group-has-[[data-banner]]:pt-0">
         <div className="flex items-end gap-3">
           <div className="rounded-2xl bg-surface p-1 shadow-md ring-1 ring-line">
             <ServerIcon favicon={server.favicon} name={server.name} size={52} />
@@ -43,8 +48,14 @@ export async function ServerTile({ server, highlight = false }: { server: Server
             >
               {server.name}
             </Link>
-            <div className="mt-1">
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <StatusBadge online={server.online} />
+              {highlight && (
+                // Shown on the banner strip instead when there is one.
+                <span className="tag gap-1 border-amber-400/40 bg-amber-400/15 text-warn group-has-[[data-banner]]:hidden">
+                  <StarIcon className="h-3 w-3" /> {t.common.featured}
+                </span>
+              )}
             </div>
           </div>
         </div>
