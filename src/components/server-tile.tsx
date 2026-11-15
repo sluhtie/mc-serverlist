@@ -5,13 +5,15 @@ import type { ServerListItem } from "@/lib/servers";
 import { CopyAddress } from "./copy-address";
 import { PlayerBar } from "./player-bar";
 import { formatAddress } from "./server-card";
-import { ServerBanner } from "./server-banner";
+import { BannerImage } from "./banner-image";
+import { IconBackdrop } from "./server-banner";
 import { ServerIcon } from "./server-icon";
 import { StatusBadge } from "./status-badge";
 
-/** Vertical card with banner artwork, used for the featured and newest sections. */
+/** Vertical card with the server banner (or a backdrop from its icon), used for the featured and newest sections. */
 export async function ServerTile({ server, highlight = false }: { server: ServerListItem; highlight?: boolean }) {
   const t = await getDictionary();
+  const backdrop = <IconBackdrop favicon={server.favicon} name={server.name} className="h-full w-full" />;
   return (
     <article
       className={`card card-hover group relative flex flex-col overflow-hidden ${
@@ -19,11 +21,19 @@ export async function ServerTile({ server, highlight = false }: { server: Server
       }`}
     >
       <div className="relative h-28 overflow-hidden">
-        <ServerBanner
-          name={server.name}
-          bannerUrl={server.bannerUrl}
-          className="h-full w-full transition-transform duration-500 group-hover:scale-105"
-        />
+        <div className="h-full w-full transition-transform duration-500 group-hover:scale-105">
+          {server.bannerUrl ? (
+            <BannerImage
+              src={server.bannerUrl}
+              alt={t.common.bannerAlt(server.name)}
+              className="h-full w-full object-cover"
+              loading="lazy"
+              fallback={backdrop}
+            />
+          ) : (
+            backdrop
+          )}
+        </div>
         <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/10 to-transparent" />
         {highlight && (
           <span className="tag absolute top-3 left-3 gap-1 border-amber-300 bg-amber-400 font-semibold text-amber-950 shadow">
