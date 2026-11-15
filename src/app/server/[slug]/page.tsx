@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { BannerImage } from "@/components/banner-image";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CopyAddress } from "@/components/copy-address";
 import { ReportForm } from "@/components/forms/report-form";
@@ -157,12 +158,11 @@ export default async function ServerPage({ params, searchParams }: PageProps<"/s
         <div className="relative h-36 overflow-hidden sm:h-44">
           {/* A custom banner is a small 468×60 strip; a light blur hides the upscaling but keeps it recognizable. */}
           {server.bannerUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <BannerImage
               src={server.bannerUrl}
               alt={t.common.bannerAlt(server.name)}
               className="h-full w-full scale-105 object-cover blur-[2px]"
-              decoding="async"
+              fallback={<ServerBanner name={server.name} bannerUrl={null} className="h-full w-full" />}
             />
           ) : (
             <ServerBanner name={server.name} bannerUrl={null} className="h-full w-full" />

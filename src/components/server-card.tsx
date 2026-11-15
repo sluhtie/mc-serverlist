@@ -3,6 +3,7 @@ import Link from "@/components/link";
 import { getDictionary } from "@/lib/i18n/server";
 import type { ServerListItem } from "@/lib/servers";
 import { knownTag, tagHref } from "@/lib/tags";
+import { BannerImage } from "./banner-image";
 import { CopyAddress } from "./copy-address";
 import { PlayerBar } from "./player-bar";
 import { ServerIcon } from "./server-icon";
@@ -49,24 +50,24 @@ export function ServerTags({ tags, limit = 4 }: { tags: string[]; limit?: number
   });
 }
 
-// Frosted panels keep text readable on any banner, light or dark. Without a banner the card has
-// no background image, so the panels are just quiet insets.
-const PANEL = "rounded-xl border border-line/70";
-const PANEL_ON_BANNER = `${PANEL} bg-surface/80 shadow-sm backdrop-blur-md`;
-const PANEL_PLAIN = `${PANEL} bg-surface-2/60`;
+// Frosted panels keep text readable on any banner, light or dark. They only turn frosted while a
+// banner is actually visible (BannerImage drops its <img> when the URL is broken), so cards
+// without one stay plain with quiet inset panels.
+const ON_BANNER =
+  "group-has-[[data-banner]]:bg-surface/80 group-has-[[data-banner]]:shadow-sm group-has-[[data-banner]]:backdrop-blur-md";
+const PANEL = `rounded-xl border border-line/70 bg-surface-2/60 ${ON_BANNER}`;
 // The panels sit above the card-wide link but let clicks through, except on their own controls.
 const PASS_THROUGH = "pointer-events-none relative z-10 [&_:is(a,button)]:pointer-events-auto";
 
 /**
  * Row in the ranking. A server's own banner fills the whole card behind a scrim, and the content
- * sits on frosted panels; servers without a banner get a plain card. The panels' backdrop-filter makes them the
- * containing block of anything absolutely positioned inside, so the card-wide click target is a
- * separate link instead of a stretched ::after on the name.
+ * sits on frosted panels; servers without a (working) banner get a plain card. The panels'
+ * backdrop-filter makes them the containing block of anything absolutely positioned inside, so the
+ * card-wide click target is a separate link instead of a stretched ::after on the name.
  */
 export async function ServerCard({ server, rank }: { server: ServerListItem; rank?: number }) {
   const t = await getDictionary();
   const href = `/server/${server.slug}`;
-  const panel = server.bannerUrl ? PANEL_ON_BANNER : PANEL_PLAIN;
   return (
     <article
       className={`card card-hover group relative isolate flex flex-col gap-3 overflow-hidden p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-4 ${
@@ -76,13 +77,11 @@ export async function ServerCard({ server, rank }: { server: ServerListItem; ran
       {server.bannerUrl && (
         <>
           <div className="absolute inset-0 -z-10 transition-transform duration-500 group-hover:scale-[1.03]" aria-hidden>
-            {/* Banners are arbitrary external URLs, so next/image would need an open allowlist. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={server.bannerUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
+            <BannerImage src={server.bannerUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
           </div>
           {/* Strong on the left where rank and icon sit on the scrim directly, lighter towards the right. */}
           <div
-            className="absolute inset-0 -z-10 bg-gradient-to-b from-surface/85 via-surface/50 to-surface/30 sm:bg-gradient-to-r sm:from-surface/90 sm:via-surface/45 sm:to-surface/5"
+            className="absolute inset-0 -z-10 hidden bg-gradient-to-b from-surface/85 via-surface/50 to-surface/30 sm:bg-gradient-to-r sm:from-surface/90 sm:via-surface/45 sm:to-surface/5 group-has-[[data-banner]]:block"
             aria-hidden
           />
         </>
@@ -100,7 +99,7 @@ export async function ServerCard({ server, rank }: { server: ServerListItem; ran
             <ServerIcon favicon={server.favicon} name={server.name} size={44} className="shadow-md" />
           </div>
         </div>
-        <div className={`min-w-0 flex-1 px-3 py-2.5 sm:max-w-xl sm:px-4 sm:py-3 ${panel}`}>
+        <div className={`min-w-0 flex-1 px-3 py-2.5 sm:max-w-xl sm:px-4 sm:py-3 ${PANEL}`}>
           <div className="flex min-w-0 items-center gap-2">
             <Link
               href={href}
@@ -128,7 +127,7 @@ export async function ServerCard({ server, rank }: { server: ServerListItem; ran
       </div>
 
       <div className={`flex flex-col gap-2 sm:w-56 sm:shrink-0 ${PASS_THROUGH}`}>
-        <div className={`flex items-end gap-4 px-3 py-2 ${panel}`}>
+        <div className={`flex items-end gap-4 px-3 py-2 ${PANEL}`}>
           <PlayerBar
             online={server.playersOnline}
             max={server.playersMax}
@@ -140,11 +139,7 @@ export async function ServerCard({ server, rank }: { server: ServerListItem; ran
             <strong className="font-pixel text-base text-fg">{server.monthlyVotes}</strong>
           </span>
         </div>
-        <div
-          className={`[&>button]:w-full [&>button]:justify-between ${
-            server.bannerUrl ? "[&>button]:bg-surface/80 [&>button]:shadow-sm [&>button]:backdrop-blur-md" : ""
-          }`}
-        >
+        <div className="[&>button]:w-full [&>button]:justify-between group-has-[[data-banner]]:[&>button]:bg-surface/80 group-has-[[data-banner]]:[&>button]:shadow-sm group-has-[[data-banner]]:[&>button]:backdrop-blur-md">
           <CopyAddress address={formatAddress(server.host, server.port)} compact />
         </div>
       </div>
