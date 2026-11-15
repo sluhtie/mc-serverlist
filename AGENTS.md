@@ -16,7 +16,7 @@ applies to agents too.
 
 ## Project in one paragraph
 
-MCServerlist is an open-source Minecraft server list: server listings with live status (Java
+MCServerlist is a source-available Minecraft server list (PolyForm Strict 1.0.0, see `LICENSE`): server listings with live status (Java
 Server List Ping), monthly vote ranking, Votifier/NuVotifier vote rewards, user accounts, server
 submission, reports and an admin area. Stack: **Next.js 16 (App Router, React 19, TypeScript)**,
 **Tailwind CSS v4**, **PostgreSQL** via **Drizzle ORM**, **Zod** validation, **Vitest** tests,
