@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { BannerImage } from "@/components/banner-image";
 import { VoteForm } from "@/components/forms/vote-form";
 import { ArrowLeftIcon, VoteIcon } from "@/components/icons";
 import Link from "@/components/link";
-import { ServerBanner } from "@/components/server-banner";
 import { formatAddress } from "@/components/server-card";
 import { ServerIcon } from "@/components/server-icon";
 import { VOTE_COOLDOWN_HOURS } from "@/lib/constants";
@@ -37,12 +37,14 @@ export default async function VotePage({ params }: PageProps<"/server/[slug]/vot
 
   return (
     <div className="mx-auto max-w-md space-y-5">
-      <div className="card overflow-hidden">
-        <div className="relative h-24">
-          <ServerBanner name={server.name} bannerUrl={null} className="h-full w-full" />
-          <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent" />
-        </div>
-        <div className="relative -mt-10 flex items-end gap-4 px-6">
+      <div className="card group overflow-hidden">
+        {server.bannerUrl && (
+          <div className="relative hidden h-24 overflow-hidden group-has-[[data-banner]]:block">
+            <BannerImage src={server.bannerUrl} alt="" className="h-full w-full object-cover" loading="eager" />
+            <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent" />
+          </div>
+        )}
+        <div className="relative flex items-end gap-4 px-6 pt-6 group-has-[[data-banner]]:-mt-10 group-has-[[data-banner]]:pt-0">
           <div className="rounded-2xl bg-surface p-1 shadow-lg ring-1 ring-line">
             <ServerIcon favicon={server.favicon} name={server.name} size={64} />
           </div>

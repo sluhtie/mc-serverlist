@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /**
- * A server's external banner. Banner URLs are arbitrary and can go stale, so a failed load shows
- * `fallback` (or nothing) instead of the browser's broken image icon. The rendered <img> carries
- * data-banner, so parents can style themselves with :has() only while a banner is visible.
+ * A server's external banner. Banner URLs are arbitrary and can go stale (404, dead host that never
+ * answers, HTML instead of an image), so the image only counts as shown once it has actually
+ * loaded: then the <img> gets data-banner, and parents style themselves with :has([data-banner]).
+ * A failed load renders `fallback` (or nothing) instead of the broken image icon.
  */
 export function BannerImage({
   src,
@@ -17,19 +18,20 @@ export function BannerImage({
   src: string;
   alt: string;
   className?: string;
+  /** Use "eager" when the image sits in a container that stays hidden until it has loaded. */
   loading?: "lazy" | "eager";
   fallback?: ReactNode;
 }) {
   const ref = useRef<HTMLImageElement>(null);
-  const [failed, setFailed] = useState(false);
+  const [state, setState] = useState<"loading" | "loaded" | "failed">("loading");
 
   useEffect(() => {
-    // The error event can fire before hydration attaches onError; a finished load without a size failed.
+    // Load and error can fire before hydration attaches the handlers, so check the finished image.
     const img = ref.current;
-    if (img?.complete && img.naturalWidth === 0) setFailed(true);
+    if (img?.complete) setState(img.naturalWidth > 0 ? "loaded" : "failed");
   }, [src]);
 
-  if (failed) return fallback;
+  if (state === "failed") return fallback;
   return (
     // Banners are arbitrary external URLs, so next/image would need an open allowlist.
     // eslint-disable-next-line @next/next/no-img-element
@@ -37,11 +39,12 @@ export function BannerImage({
       ref={ref}
       src={src}
       alt={alt}
-      data-banner=""
-      className={className}
+      data-banner={state === "loaded" ? "" : undefined}
+      className={`transition-opacity duration-300 ${state === "loaded" ? "opacity-100" : "opacity-0"} ${className}`}
       loading={loading}
       decoding="async"
-      onError={() => setFailed(true)}
+      onLoad={(e) => setState(e.currentTarget.naturalWidth > 0 ? "loaded" : "failed")}
+      onError={() => setState("failed")}
     />
   );
 }

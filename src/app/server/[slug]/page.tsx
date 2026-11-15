@@ -21,7 +21,6 @@ import { Motd } from "@/components/motd";
 import { PlayerBar } from "@/components/player-bar";
 import { PlayerChart } from "@/components/player-chart";
 import { PlayerHead } from "@/components/player-head";
-import { ServerBanner } from "@/components/server-banner";
 import { formatAddress, ServerTags } from "@/components/server-card";
 import { ServerIcon } from "@/components/server-icon";
 import { StatusBadge } from "@/components/status-badge";
@@ -154,22 +153,21 @@ export default async function ServerPage({ params, searchParams }: PageProps<"/s
         </p>
       )}
 
-      <header className="card relative overflow-hidden">
-        <div className="relative h-36 overflow-hidden sm:h-44">
-          {/* A custom banner is a small 468×60 strip; a light blur hides the upscaling but keeps it recognizable. */}
-          {server.bannerUrl ? (
+      <header className="card group relative overflow-hidden">
+        {/* Only a banner that actually loads gets the strip (see BannerImage); otherwise the header is plain. */}
+        {server.bannerUrl && (
+          <div className="relative hidden h-36 overflow-hidden group-has-[[data-banner]]:block sm:h-44">
+            {/* A custom banner is a small 468×60 strip; a light blur hides the upscaling but keeps it recognizable. */}
             <BannerImage
               src={server.bannerUrl}
               alt={t.common.bannerAlt(server.name)}
               className="h-full w-full scale-105 object-cover blur-[2px]"
-              fallback={<ServerBanner name={server.name} bannerUrl={null} className="h-full w-full" />}
+              loading="eager"
             />
-          ) : (
-            <ServerBanner name={server.name} bannerUrl={null} className="h-full w-full" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent to-70%" />
-        </div>
-        <div className="relative -mt-16 flex flex-col gap-6 px-6 pb-6 md:flex-row md:items-end">
+            <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent to-70%" />
+          </div>
+        )}
+        <div className="relative flex flex-col gap-6 p-6 group-has-[[data-banner]]:-mt-16 group-has-[[data-banner]]:pt-0 md:flex-row md:items-end">
           <div className="w-fit rounded-3xl bg-surface p-1.5 shadow-xl ring-1 ring-line">
             <ServerIcon favicon={server.favicon} name={server.name} size={96} className="rounded-2xl" />
           </div>
