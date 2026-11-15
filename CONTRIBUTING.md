@@ -21,7 +21,7 @@ or other channel, you agree that:
 
 - you wrote it yourself or otherwise have the right to submit it;
 - you assign all copyright and related rights in your contribution to the project owner
-  ([sluhtie](https://github.com/sluhtie)). Where an assignment is not possible under applicable
+  Connor Welge ([sluhtie](https://github.com/sluhtie)). Where an assignment is not possible under applicable
   law, you grant the project owner an exclusive, perpetual, worldwide, irrevocable, royalty-free
   license to use, modify, sublicense and distribute the contribution for any purpose and under
   any terms, including licenses other than the current one;
