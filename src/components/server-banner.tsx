@@ -1,4 +1,5 @@
 import { bannerTheme } from "@/lib/banner";
+import { BannerImage } from "./banner-image";
 
 const BLOCK = 10;
 
@@ -70,12 +71,17 @@ export function ServerBanner({
   bannerUrl: string | null;
   className?: string;
 }) {
+  const placeholder = <BannerPlaceholder seed={name} className={className} />;
   if (bannerUrl) {
     return (
-      // Banners are arbitrary external URLs, so next/image would need an open allowlist.
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={bannerUrl} alt={`${name} Banner`} className={`object-cover ${className}`} loading="lazy" />
+      <BannerImage
+        src={bannerUrl}
+        alt={`${name} Banner`}
+        className={`object-cover ${className}`}
+        loading="lazy"
+        fallback={placeholder}
+      />
     );
   }
-  return <BannerPlaceholder seed={name} className={className} />;
+  return placeholder;
 }
