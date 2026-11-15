@@ -13,3 +13,4 @@
 - [ ] Migration generated and committed (if `schema.ts` changed)
 - [ ] UI texts in both dictionaries (German and English), code and comments in English
 - [ ] Docs updated (README, `.env.example`, AGENTS.md) if behaviour or config changed
+- [ ] I agree to the [contribution terms](https://github.com/sluhtie/mc-serverlist/blob/main/CONTRIBUTING.md#license-of-contributions) (rights in my contribution go to the project owner)

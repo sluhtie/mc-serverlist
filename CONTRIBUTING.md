@@ -9,6 +9,27 @@ Thanks for helping out! Bug reports, ideas, docs and code are all welcome.
   before you invest time.
 - Security issues: please do **not** open a public issue, see [SECURITY.md](SECURITY.md).
 
+## License of contributions
+
+MCServerlist is source-available under the [PolyForm Strict License 1.0.0](LICENSE), which on its
+own does not allow changes to the code. As an additional permission, you may fork this repository
+and change the code **only to prepare and submit contributions to this repository**, and you may
+run it locally to develop and test them.
+
+By submitting a contribution (code, docs, images or anything else) through a pull request, issue
+or other channel, you agree that:
+
+- you wrote it yourself or otherwise have the right to submit it;
+- you assign all copyright and related rights in your contribution to the project owner
+  ([sluhtie](https://github.com/sluhtie)). Where an assignment is not possible under applicable
+  law, you grant the project owner an exclusive, perpetual, worldwide, irrevocable, royalty-free
+  license to use, modify, sublicense and distribute the contribution for any purpose and under
+  any terms, including licenses other than the current one;
+- you waive, as far as the law allows, any moral rights that would prevent such use;
+- your contribution comes without any warranty.
+
+If you cannot agree to this, please do not submit a contribution.
+
 ## Development setup
 
 ```bash

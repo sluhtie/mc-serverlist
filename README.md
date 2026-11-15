@@ -1,6 +1,6 @@
 # MCServerlist
 
-An open-source **Minecraft server list** built with Next.js. Server owners list their servers,
+A source-available **Minecraft server list** built with Next.js. Server owners list their servers,
 players find them, check live status and vote for their favourites. Votes can be delivered to the
 game server via Votifier/NuVotifier for in-game rewards.
 
@@ -110,4 +110,11 @@ Contributions are very welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) a
 
 ## License
 
-[MIT](LICENSE). Not affiliated with Mojang Studios or Microsoft.
+MCServerlist is **source-available, not open source**. The code is published under the
+[PolyForm Strict License 1.0.0](LICENSE): you may read it and contribute to this repository (see
+[CONTRIBUTING.md](CONTRIBUTING.md#license-of-contributions)), but you may not distribute it, make
+changes or build new works based on it, so it cannot serve as the base of your own projects.
+Commercial use is not permitted either. If you would like to use it in a way the license does not
+allow, ask in an issue.
+
+Not affiliated with Mojang Studios or Microsoft.
