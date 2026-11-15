@@ -18,15 +18,15 @@ export async function ServerTile({ server, highlight = false }: { server: Server
         highlight ? "border-amber-400/50 ring-1 ring-amber-400/20" : ""
       }`}
     >
-      {/* Only servers with a working banner get the artwork strip; BannerImage drops its <img>
-          (and with it [data-banner]) when the URL is broken, which collapses the strip. */}
+      {/* Only servers with a working banner get the artwork strip: it stays collapsed until the
+          image has loaded (BannerImage sets [data-banner]), so broken URLs never leave a gap. */}
       {server.bannerUrl && (
         <div className="relative hidden h-28 overflow-hidden group-has-[[data-banner]]:block">
           <BannerImage
             src={server.bannerUrl}
             alt={t.common.bannerAlt(server.name)}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
+            className="h-full w-full object-cover group-hover:scale-105 [transition:opacity_.3s,transform_.5s]"
+            loading="eager"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/10 to-transparent" />
           {highlight && (
