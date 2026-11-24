@@ -18,7 +18,7 @@
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.4",
     "next": "16.4.6",
-    "nodemailer": "^10.5.0",
+    "nodemailer": "^10.6.1",
     "postgres": "^4.1.1",
     "qrcode": "^1.5.4",
     "react": "19.3.1",
@@ -40,7 +40,7 @@
     "eslint-config-next": "16.4.6",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.1"
   },
   "engines": {
     "node": ">=22"
